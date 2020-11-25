@@ -1,7 +1,13 @@
 //! Compute@Edge static content starter kit program.
 
-use fastly::{Error, http::HeaderValue, Request, Response};
-use fastly::http::StatusCode;
+use fastly::{Error, Request, Response, Body};
+use fastly::http::header::{
+  ACCESS_CONTROL_ALLOW_HEADERS, ACCESS_CONTROL_ALLOW_METHODS, ACCESS_CONTROL_ALLOW_ORIGIN,
+  ACCESS_CONTROL_MAX_AGE, ACCESS_CONTROL_REQUEST_HEADERS, ACCESS_CONTROL_REQUEST_METHOD,
+  CACHE_CONTROL, ORIGIN, CONTENT_SECURITY_POLICY, X_FRAME_OPTIONS, CONTENT_LENGTH,
+  CONTENT_TYPE, DATE, STRICT_TRANSPORT_SECURITY, REFERRER_POLICY
+};
+use fastly::http::{StatusCode, HeaderValue, header::HeaderName, Method};
 
 /// The name of a backend server associated with this service.
 ///
@@ -15,7 +21,8 @@ const BUCKET_NAME: &str = "betts-gcp-gcs-fastly-tutorial";
 /// The host that the bucket is served on. This is used to make requests to the backend.
 const BUCKET_HOST: &str = "storage.googleapis.com";
 
-const ALLOWED_HEADERS: [&str; 3] = ["content-length", "content-type", "date"];
+/// Allowlist of headers for responses to the client.
+const ALLOWED_HEADERS: [HeaderName; 3] = [CONTENT_LENGTH, CONTENT_TYPE, DATE];
 
 /// The entry point for your application.
 ///
@@ -26,6 +33,22 @@ const ALLOWED_HEADERS: [&str; 3] = ["content-length", "content-type", "date"];
 /// If `main` returns an error, a 500 error response will be delivered to the client.
 #[fastly::main]
 fn main(mut req: Request) -> Result<Response, Error> {
+  // Respond to CORS preflight requests
+  if req.get_method() == Method::OPTIONS && req.get_header(ORIGIN).is_some()
+    && (req.get_header(ACCESS_CONTROL_REQUEST_HEADERS).is_some() || req.get_header(ACCESS_CONTROL_REQUEST_METHOD).is_some()) {
+    return Ok(Response::from_body(Body::new())
+        .with_status(StatusCode::NO_CONTENT)
+        .with_header(
+            ACCESS_CONTROL_ALLOW_ORIGIN,
+            req.get_header(ORIGIN).unwrap(),
+        )
+        .with_header(ACCESS_CONTROL_ALLOW_METHODS, "GET,HEAD,POST,OPTIONS")
+        .with_header(ACCESS_CONTROL_MAX_AGE, "86400")
+        .with_header(CACHE_CONTROL, "public, max-age=86400")
+    );
+  }
+
+  // Store a reference to the original request path
   let original_path = req.get_path();
 
   let path = if original_path.ends_with('/') {
@@ -71,9 +94,9 @@ fn main(mut req: Request) -> Result<Response, Error> {
 
   // Remove extraneous headers from the backend response.
   let mut to_remove: Vec<String> = Vec::new();
-  beresp.get_header_names().map(|n| n.to_string()).for_each(|name| {
-    if !ALLOWED_HEADERS.contains(&name.to_lowercase().as_str()) {
-      to_remove.push(name);
+  beresp.get_header_names().for_each(|name| {
+    if !ALLOWED_HEADERS.contains(name) {
+      to_remove.push(name.to_string());
     }
   });
   to_remove.iter().for_each(|h| {
@@ -84,12 +107,12 @@ fn main(mut req: Request) -> Result<Response, Error> {
   if let Some(header) = beresp.get_header("content-type") {
     if header.to_str().unwrap().starts_with("text/html") {
       beresp.set_header(
-        "referrer-policy",
+        REFERRER_POLICY,
         "origin-when-cross-origin",
       );
       beresp.set_header(
-          "strict-transport-security",
-          "dmax-age=3600",
+          STRICT_TRANSPORT_SECURITY,
+          "max-age=2592000",
       );
     }
   }
@@ -100,7 +123,13 @@ fn main(mut req: Request) -> Result<Response, Error> {
     Some(val) => val.clone(),
     _ => HeaderValue::from_str("*").unwrap(),
   };
-  beresp.set_header("access-control-allow-origin", allowed_origins);
+  beresp.set_header(ACCESS_CONTROL_ALLOW_ORIGIN, allowed_origins);
+
+  // Set Content-Security-Policy header to prevent loading content from other origins
+  beresp.set_header(CONTENT_SECURITY_POLICY, "default-src 'self';");
+
+  // Set X-Frame-Options header to prevent other origins embedding the site
+  beresp.set_header(X_FRAME_OPTIONS, "SAMEORIGIN");
 
   // Return the backend response to the client.
   return Ok(beresp);

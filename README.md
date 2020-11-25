@@ -13,7 +13,8 @@ Speed up your websites with a Compute@Edge environment that demonstrates serving
 * Remove extra headers sent by your storage provider, such as `x-goog-*`
 * Add caching policy to content
 * Normalize query strings
-* Add Content Security Policy header
+* Add Content Security Policy and other security-related headers
+* Respond to CORS preflight requests
 * Add `Link: rel=preload` header to pre-fetch JavaScript and CSS
 
 ## Understanding the code
