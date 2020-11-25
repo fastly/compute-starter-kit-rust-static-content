@@ -10,9 +10,9 @@ Speed up your websites with a Compute@Edge environment that demonstrates serving
 * Prefix the backend request path with your bucket prefix
 * Redirect directory requests to index.html
 * Serve a 404 page if the requested page is not found
+* Remove extra headers sent by your storage provider, such as `x-goog-*`
 * Add caching policy to content
 * Normalize query strings
-* Remove extra headers sent by your storage provider, such as `x-goog-*`
 * Add Content Security Policy header
 * Add `Link: rel=preload` header to pre-fetch JavaScript and CSS
 
