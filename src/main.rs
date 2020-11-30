@@ -2,7 +2,7 @@
 
 use fastly::{Error, Request, Response, Body};
 use fastly::http::header::{
-  ACCESS_CONTROL_ALLOW_HEADERS, ACCESS_CONTROL_ALLOW_METHODS, ACCESS_CONTROL_ALLOW_ORIGIN,
+  ACCESS_CONTROL_ALLOW_METHODS, ACCESS_CONTROL_ALLOW_ORIGIN,
   ACCESS_CONTROL_MAX_AGE, ACCESS_CONTROL_REQUEST_HEADERS, ACCESS_CONTROL_REQUEST_METHOD,
   CACHE_CONTROL, ORIGIN, CONTENT_SECURITY_POLICY, X_FRAME_OPTIONS, CONTENT_LENGTH,
   CONTENT_TYPE, DATE, STRICT_TRANSPORT_SECURITY, REFERRER_POLICY
@@ -15,11 +15,11 @@ use fastly::http::{StatusCode, HeaderValue, header::HeaderName, Method};
 /// the Fastly WASM service UI for more information.
 const BACKEND_NAME: &str = "bucket_host";
 
-/// The name of the bucket to serve content from. By default, this is an example bucket hosted on GCS.
-const BUCKET_NAME: &str = "betts-gcp-gcs-fastly-tutorial";
+/// The name of the bucket to serve content from. By default, this is an example bucket on a mock endpoint.
+const BUCKET_NAME: &str = "example-bucket";
 
 /// The host that the bucket is served on. This is used to make requests to the backend.
-const BUCKET_HOST: &str = "storage.googleapis.com";
+const BUCKET_HOST: &str = "mock-s3.edgecompute.app";
 
 /// Allowlist of headers for responses to the client.
 const ALLOWED_HEADERS: [HeaderName; 3] = [CONTENT_LENGTH, CONTENT_TYPE, DATE];
@@ -33,15 +33,19 @@ const ALLOWED_HEADERS: [HeaderName; 3] = [CONTENT_LENGTH, CONTENT_TYPE, DATE];
 /// If `main` returns an error, a 500 error response will be delivered to the client.
 #[fastly::main]
 fn main(mut req: Request) -> Result<Response, Error> {
+  // Used later to generate CORS headers.
+  // Usually you would want an allowlist of domains here, but this example allows any origin to make requests.
+  let allowed_origins = match req.get_header("origin") {
+    Some(val) => val.clone(),
+    _ => HeaderValue::from_str("*").unwrap(),
+  };
+
   // Respond to CORS preflight requests
   if req.get_method() == Method::OPTIONS && req.get_header(ORIGIN).is_some()
     && (req.get_header(ACCESS_CONTROL_REQUEST_HEADERS).is_some() || req.get_header(ACCESS_CONTROL_REQUEST_METHOD).is_some()) {
     return Ok(Response::from_body(Body::new())
         .with_status(StatusCode::NO_CONTENT)
-        .with_header(
-            ACCESS_CONTROL_ALLOW_ORIGIN,
-            req.get_header(ORIGIN).unwrap(),
-        )
+        .with_header(ACCESS_CONTROL_ALLOW_ORIGIN, allowed_origins)
         .with_header(ACCESS_CONTROL_ALLOW_METHODS, "GET,HEAD,POST,OPTIONS")
         .with_header(ACCESS_CONTROL_MAX_AGE, "86400")
         .with_header(CACHE_CONTROL, "public, max-age=86400")
@@ -63,8 +67,8 @@ fn main(mut req: Request) -> Result<Response, Error> {
   // Set the `Host` header to the bucket host rather than our C@E endpoint.
   req.set_header("Host", BUCKET_HOST);
 
-  // Used later to generate CORS headers.
-  let origin = req.get_header("origin");
+  // Authenticate the request to the origin. TODO: AwsV4
+  req.set_header("Authorization", "Bearer letmein");
 
   // Copy the modified client request to create a backend request.
   let mut bereq = copy_request(&req);
@@ -73,7 +77,7 @@ fn main(mut req: Request) -> Result<Response, Error> {
   let mut beresp = bereq.send(BACKEND_NAME)?;
 
   // If backend response is 404, try for index.html
-  if beresp.get_status() == StatusCode::NOT_FOUND && !path.ends_with("index.html") {
+  if (beresp.get_status() == StatusCode::NOT_FOUND || beresp.get_status() == StatusCode::FORBIDDEN) && !path.ends_with("index.html") {
     // Copy the original request and append index.html.
     bereq = copy_request(&req);
     bereq.set_path(&format!("{}/index.html", bereq.get_path()));
@@ -83,7 +87,7 @@ fn main(mut req: Request) -> Result<Response, Error> {
   }
 
   // If backend response is still 404, serve the 404.html file from the bucket.
-  if beresp.get_status() == StatusCode::NOT_FOUND {
+  if beresp.get_status() == StatusCode::NOT_FOUND || beresp.get_status() == StatusCode::FORBIDDEN {
     // Copy the original request and replace the path with /index.html.
     bereq = copy_request(&req);
     bereq.set_path(format!("/{}/404.html", BUCKET_NAME).as_str());
@@ -118,11 +122,6 @@ fn main(mut req: Request) -> Result<Response, Error> {
   }
 
   // Apply Access-Control-Allow-Origin to allow cross-origin resource sharing
-  // Usually you would want a whitelist of domains here, but this example allows any origin to make requests.
-  let allowed_origins = match origin {
-    Some(val) => val.clone(),
-    _ => HeaderValue::from_str("*").unwrap(),
-  };
   beresp.set_header(ACCESS_CONTROL_ALLOW_ORIGIN, allowed_origins);
 
   // Set Content-Security-Policy header to prevent loading content from other origins
