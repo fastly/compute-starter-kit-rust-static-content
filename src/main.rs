@@ -96,16 +96,7 @@ fn main(mut req: Request) -> Result<Response, Error> {
     beresp = bereq.send(BACKEND_NAME)?;
   }
 
-  // Remove extraneous headers from the backend response.
-  let mut to_remove: Vec<String> = Vec::new();
-  beresp.get_header_names().for_each(|name| {
-    if !ALLOWED_HEADERS.contains(name) {
-      to_remove.push(name.to_string());
-    }
-  });
-  to_remove.iter().for_each(|h| {
-    beresp.remove_header(h);
-  });
+  filter_headers(&mut beresp);
 
   // Apply referrer-policy and HSTS to HTML pages
   if let Some(header) = beresp.get_header("content-type") {
@@ -132,6 +123,18 @@ fn main(mut req: Request) -> Result<Response, Error> {
 
   // Return the backend response to the client.
   return Ok(beresp);
+}
+
+fn filter_headers(resp: &mut Response) {
+  let mut to_remove: Vec<HeaderName> = Vec::new();
+  for header in resp.get_header_names() {
+    if !ALLOWED_HEADERS.contains(header) {
+      to_remove.push(header.clone());
+    }
+  }
+  for header in to_remove {
+    resp.remove_header(header);
+  }
 }
 
 fn copy_request(req: &Request) -> Request {
