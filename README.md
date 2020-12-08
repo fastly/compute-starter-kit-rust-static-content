@@ -6,16 +6,16 @@ Speed up your websites with a Compute@Edge environment that demonstrates serving
 
 ## Features
 
-* Authenticate requests to the origin
-* Prefix the backend request path with your bucket prefix
-* Redirect directory requests to index.html
-* Serve a 404 page if the requested page is not found
-* Remove extra headers sent by your storage provider, such as `x-goog-*`
-* Add caching policy to content
-* Normalize query strings
-* Add Content Security Policy and other security-related headers
-* Respond to CORS preflight requests
-* Add `Link: rel=preload` header to pre-fetch JavaScript and CSS
+- [x] Prefix the backend bucket hostname with your bucket prefix
+- [x] Serve a 404 page if the requested page is not found
+- [x] Remove extra headers sent by your storage provider, such as `x-goog-*`
+- [x] Add Content Security Policy and other security-related headers
+- [x] Respond to CORS preflight requests
+- [ ] Authenticate requests to the origin with AWS Signature Version 4
+- [ ] Redirect requests for directories to index.html (TODO: currently no redirect to `/`)
+- [ ] Add caching policy to content
+- [ ] Add `Link: rel=preload` header to pre-fetch JavaScript and CSS
+- [ ] Normalize query strings
 
 ## Understanding the code
 

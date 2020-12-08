@@ -40,7 +40,7 @@ fn main(mut req: Request) -> Result<Response, Error> {
     _ => HeaderValue::from_str("*").unwrap(),
   };
 
-  // Respond to CORS preflight requests
+  // Respond to CORS preflight requests.
   if req.get_method() == Method::OPTIONS && req.get_header(ORIGIN).is_some()
     && (req.get_header(ACCESS_CONTROL_REQUEST_HEADERS).is_some() || req.get_header(ACCESS_CONTROL_REQUEST_METHOD).is_some()) {
     return Ok(Response::from_body(Body::new())
@@ -52,12 +52,13 @@ fn main(mut req: Request) -> Result<Response, Error> {
     );
   }
 
+  // Append index.html if path is a directory.
   if req.get_path().ends_with('/') {
     req.set_path(&format!("{}index.html", req.get_path()));
   }
 
   // Assign the path to a variable to be used later.
-  let path = req.get_path().to_owned();
+  let original_path = req.get_path().to_owned();
 
   // Set the `Host` header to the bucket host rather than our C@E endpoint.
   req.set_header("Host", format!("{}.{}", BUCKET_NAME, BUCKET_HOST));
@@ -72,10 +73,10 @@ fn main(mut req: Request) -> Result<Response, Error> {
   let mut beresp = bereq.send(BACKEND_NAME)?;
 
   // If backend response is 404, try for index.html
-  if is_not_found(&beresp) && !path.ends_with("index.html") {
-    // Copy the original request and append index.html.
+  if is_not_found(&beresp) && !original_path.ends_with("index.html") {
+    // Copy the original request and append index.html to the path.
     bereq = copy_request(&req);
-    bereq.set_path(&format!("{}/index.html", bereq.get_path()));
+    bereq.set_path(&format!("{}/index.html", original_path));
 
     // Send the request to the backend.
     beresp = bereq.send(BACKEND_NAME)?;
@@ -83,7 +84,7 @@ fn main(mut req: Request) -> Result<Response, Error> {
 
   // If backend response is still 404, serve the 404.html file from the bucket.
   if is_not_found(&beresp) {
-    // Copy the original request and replace the path with /index.html.
+    // Copy the original request and replace the path with /404.html.
     bereq = copy_request(&req);
     bereq.set_path("/404.html");
 
@@ -93,7 +94,7 @@ fn main(mut req: Request) -> Result<Response, Error> {
 
   filter_headers(&mut beresp);
 
-  // Apply referrer-policy and HSTS to HTML pages
+  // Apply referrer-policy and HSTS to HTML pages.
   if let Some(header) = beresp.get_header("content-type") {
     if header.to_str().unwrap().starts_with("text/html") {
       beresp.set_header(
@@ -107,23 +108,25 @@ fn main(mut req: Request) -> Result<Response, Error> {
     }
   }
 
-  // Apply Access-Control-Allow-Origin to allow cross-origin resource sharing
+  // Apply Access-Control-Allow-Origin to allow cross-origin resource sharing.
   beresp.set_header(ACCESS_CONTROL_ALLOW_ORIGIN, allowed_origins);
 
-  // Set Content-Security-Policy header to prevent loading content from other origins
+  // Set Content-Security-Policy header to prevent loading content from other origins.
   beresp.set_header(CONTENT_SECURITY_POLICY, "default-src 'self';");
 
-  // Set X-Frame-Options header to prevent other origins embedding the site
+  // Set X-Frame-Options header to prevent other origins embedding the site.
   beresp.set_header(X_FRAME_OPTIONS, "SAMEORIGIN");
 
   // Return the backend response to the client.
   return Ok(beresp);
 }
 
+/// Determines if a backend response indicates the requested file not existing.
 fn is_not_found(resp: &Response) -> bool {
   return resp.get_status() == StatusCode::NOT_FOUND || resp.get_status() == StatusCode::FORBIDDEN;
 }
 
+/// Removes all headers but those defined in `ALLOWED_HEADERS` from a response.
 fn filter_headers(resp: &mut Response) {
   let mut to_remove: Vec<HeaderName> = Vec::new();
   for header in resp.get_header_names() {
@@ -136,6 +139,7 @@ fn filter_headers(resp: &mut Response) {
   }
 }
 
+/// Create a copy of a request with the same method, URL, and headers.
 fn copy_request(req: &Request) -> Request {
   let mut new = Request::new(req.get_method(), req.get_url());
   req.get_header_names().for_each(|h| new.set_header(h, req.get_header(h).unwrap()));
