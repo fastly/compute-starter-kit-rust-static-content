@@ -16,10 +16,10 @@ use fastly::http::{StatusCode, HeaderValue, header::HeaderName, Method};
 const BACKEND_NAME: &str = "bucket_host";
 
 /// The name of the bucket to serve content from. By default, this is an example bucket on a mock endpoint.
-const BUCKET_NAME: &str = "example-bucket";
+const BUCKET_NAME: &str = "mock-s3";
 
 /// The host that the bucket is served on. This is used to make requests to the backend.
-const BUCKET_HOST: &str = "mock-s3.edgecompute.app";
+const BUCKET_HOST: &str = "edgecompute.app";
 
 /// Allowlist of headers for responses to the client.
 const ALLOWED_HEADERS: [HeaderName; 3] = [CONTENT_LENGTH, CONTENT_TYPE, DATE];
@@ -52,20 +52,15 @@ fn main(mut req: Request) -> Result<Response, Error> {
     );
   }
 
-  // Store a reference to the original request path
-  let original_path = req.get_path();
+  if req.get_path().ends_with('/') {
+    req.set_path(&format!("{}index.html", req.get_path()));
+  }
 
-  let path = if original_path.ends_with('/') {
-    // If the path ends with a separator, prepend bucket name and append index.html.
-    format!("/{}{}index.html", BUCKET_NAME, original_path)
-  } else {
-    // Otherwise just prepend the bucket name.
-    format!("/{}{}", BUCKET_NAME, original_path)
-  };
-  req.set_path(&path);
+  // Assign the path to a variable to be used later.
+  let path = req.get_path().to_owned();
 
   // Set the `Host` header to the bucket host rather than our C@E endpoint.
-  req.set_header("Host", BUCKET_HOST);
+  req.set_header("Host", format!("{}.{}", BUCKET_NAME, BUCKET_HOST));
 
   // Authenticate the request to the origin. TODO: AwsV4
   req.set_header("Authorization", "Bearer letmein");
@@ -77,7 +72,7 @@ fn main(mut req: Request) -> Result<Response, Error> {
   let mut beresp = bereq.send(BACKEND_NAME)?;
 
   // If backend response is 404, try for index.html
-  if (beresp.get_status() == StatusCode::NOT_FOUND || beresp.get_status() == StatusCode::FORBIDDEN) && !path.ends_with("index.html") {
+  if is_not_found(&beresp) && !path.ends_with("index.html") {
     // Copy the original request and append index.html.
     bereq = copy_request(&req);
     bereq.set_path(&format!("{}/index.html", bereq.get_path()));
@@ -87,10 +82,10 @@ fn main(mut req: Request) -> Result<Response, Error> {
   }
 
   // If backend response is still 404, serve the 404.html file from the bucket.
-  if beresp.get_status() == StatusCode::NOT_FOUND || beresp.get_status() == StatusCode::FORBIDDEN {
+  if is_not_found(&beresp) {
     // Copy the original request and replace the path with /index.html.
     bereq = copy_request(&req);
-    bereq.set_path(format!("/{}/404.html", BUCKET_NAME).as_str());
+    bereq.set_path("/404.html");
 
     // Send the request to the backend.
     beresp = bereq.send(BACKEND_NAME)?;
@@ -123,6 +118,10 @@ fn main(mut req: Request) -> Result<Response, Error> {
 
   // Return the backend response to the client.
   return Ok(beresp);
+}
+
+fn is_not_found(resp: &Response) -> bool {
+  return resp.get_status() == StatusCode::NOT_FOUND || resp.get_status() == StatusCode::FORBIDDEN;
 }
 
 fn filter_headers(resp: &mut Response) {
