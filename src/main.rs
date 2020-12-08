@@ -52,6 +52,11 @@ fn main(mut req: Request) -> Result<Response, Error> {
     );
   }
 
+  // Respond to requests for robots.txt.
+  if req.get_path() == "/robots.txt" {
+    return Ok(Response::from_body("User-agent: *\nAllow: /").with_header(CONTENT_TYPE, "text/plain"));
+  }
+
   // Append index.html if path is a directory.
   if req.get_path().ends_with('/') {
     req.set_path(&format!("{}index.html", req.get_path()));
