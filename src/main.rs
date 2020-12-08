@@ -5,7 +5,7 @@ use fastly::http::header::{
   ACCESS_CONTROL_ALLOW_METHODS, ACCESS_CONTROL_ALLOW_ORIGIN,
   ACCESS_CONTROL_MAX_AGE, ACCESS_CONTROL_REQUEST_HEADERS, ACCESS_CONTROL_REQUEST_METHOD,
   CACHE_CONTROL, ORIGIN, CONTENT_SECURITY_POLICY, X_FRAME_OPTIONS, CONTENT_LENGTH,
-  CONTENT_TYPE, DATE, STRICT_TRANSPORT_SECURITY, REFERRER_POLICY
+  CONTENT_TYPE, DATE, STRICT_TRANSPORT_SECURITY, REFERRER_POLICY, LOCATION
 };
 use fastly::http::{StatusCode, HeaderValue, header::HeaderName, Method};
 
@@ -80,6 +80,13 @@ fn main(mut req: Request) -> Result<Response, Error> {
 
     // Send the request to the backend.
     beresp = bereq.send(BACKEND_NAME)?;
+
+    // If file exists, trigger redirect with `/` appended to path.
+    // This means the canonical URL for index pages will always end with a trailing slash.
+    if !is_not_found(&beresp) {
+      beresp = Response::new().with_status(StatusCode::MOVED_PERMANENTLY).with_header(LOCATION, &format!("{}/", original_path));
+      return Ok(beresp);
+    }
   }
 
   // If backend response is still 404, serve the 404.html file from the bucket.
@@ -112,7 +119,7 @@ fn main(mut req: Request) -> Result<Response, Error> {
   beresp.set_header(ACCESS_CONTROL_ALLOW_ORIGIN, allowed_origins);
 
   // Set Content-Security-Policy header to prevent loading content from other origins.
-  beresp.set_header(CONTENT_SECURITY_POLICY, "default-src 'self';");
+  beresp.set_header(CONTENT_SECURITY_POLICY, "default-src 'self'; style-src 'self' fonts.googleapis.com; font-src fonts.gstatic.com");
 
   // Set X-Frame-Options header to prevent other origins embedding the site.
   beresp.set_header(X_FRAME_OPTIONS, "SAMEORIGIN");

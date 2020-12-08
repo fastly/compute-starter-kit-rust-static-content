@@ -11,8 +11,8 @@ Speed up your websites with a Compute@Edge environment that demonstrates serving
 - [x] Remove extra headers sent by your storage provider, such as `x-goog-*`
 - [x] Add Content Security Policy and other security-related headers
 - [x] Respond to CORS preflight requests
+- [x] Redirect requests for directories to index.html
 - [ ] Authenticate requests to the origin with AWS Signature Version 4
-- [ ] Redirect requests for directories to index.html (TODO: currently no redirect to `/`)
 - [ ] Add caching policy to content
 - [ ] Add `Link: rel=preload` header to pre-fetch JavaScript and CSS
 - [ ] Normalize query strings
