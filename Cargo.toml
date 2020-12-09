@@ -8,4 +8,8 @@ edition = "2018"
 debug = true
 
 [dependencies]
-fastly = "^0.6.0-beta1"
+fastly = "^0.6.0-beta2"
+chrono = "0.4.19"
+hmac-sha256 = "0.1.6"
+hex = "0.4.2"
+urlencoding = "1.1.1"

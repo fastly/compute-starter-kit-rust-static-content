@@ -1,28 +1,18 @@
 //! Compute@Edge static content starter kit program.
 
-use fastly::{Error, Request, Response, Body};
+mod config;
+mod awsv4;
+
+use chrono::Utc;
+use fastly::{Body, Error, Request, Response, http::header::AUTHORIZATION};
 use fastly::http::header::{
   ACCESS_CONTROL_ALLOW_METHODS, ACCESS_CONTROL_ALLOW_ORIGIN,
   ACCESS_CONTROL_MAX_AGE, ACCESS_CONTROL_REQUEST_HEADERS, ACCESS_CONTROL_REQUEST_METHOD,
-  CACHE_CONTROL, ORIGIN, CONTENT_SECURITY_POLICY, X_FRAME_OPTIONS, CONTENT_LENGTH,
-  CONTENT_TYPE, DATE, STRICT_TRANSPORT_SECURITY, REFERRER_POLICY, LOCATION
+  CACHE_CONTROL, ORIGIN, CONTENT_SECURITY_POLICY, X_FRAME_OPTIONS,
+  CONTENT_TYPE, STRICT_TRANSPORT_SECURITY, REFERRER_POLICY, LOCATION
 };
 use fastly::http::{StatusCode, HeaderValue, header::HeaderName, Method};
-
-/// The name of a backend server associated with this service.
-///
-/// This should be changed to match the name of your own backend. See the the `Hosts` section of
-/// the Fastly WASM service UI for more information.
-const BACKEND_NAME: &str = "bucket_host";
-
-/// The name of the bucket to serve content from. By default, this is an example bucket on a mock endpoint.
-const BUCKET_NAME: &str = "mock-s3";
-
-/// The host that the bucket is served on. This is used to make requests to the backend.
-const BUCKET_HOST: &str = "edgecompute.app";
-
-/// Allowlist of headers for responses to the client.
-const ALLOWED_HEADERS: [HeaderName; 3] = [CONTENT_LENGTH, CONTENT_TYPE, DATE];
+use crate::awsv4::hash;
 
 /// The entry point for your application.
 ///
@@ -43,13 +33,7 @@ fn main(mut req: Request) -> Result<Response, Error> {
   // Respond to CORS preflight requests.
   if req.get_method() == Method::OPTIONS && req.get_header(ORIGIN).is_some()
     && (req.get_header(ACCESS_CONTROL_REQUEST_HEADERS).is_some() || req.get_header(ACCESS_CONTROL_REQUEST_METHOD).is_some()) {
-    return Ok(Response::from_body(Body::new())
-        .with_status(StatusCode::NO_CONTENT)
-        .with_header(ACCESS_CONTROL_ALLOW_ORIGIN, allowed_origins)
-        .with_header(ACCESS_CONTROL_ALLOW_METHODS, "GET,HEAD,POST,OPTIONS")
-        .with_header(ACCESS_CONTROL_MAX_AGE, "86400")
-        .with_header(CACHE_CONTROL, "public, max-age=86400")
-    );
+    return Ok(create_cors_response(allowed_origins));
   }
 
   // Respond to requests for robots.txt.
@@ -66,16 +50,16 @@ fn main(mut req: Request) -> Result<Response, Error> {
   let original_path = req.get_path().to_owned();
 
   // Set the `Host` header to the bucket host rather than our C@E endpoint.
-  req.set_header("Host", format!("{}.{}", BUCKET_NAME, BUCKET_HOST));
-
-  // Authenticate the request to the origin. TODO: AwsV4
-  req.set_header("Authorization", "Bearer letmein");
+  req.set_header("Host", format!("{}.{}", config::BUCKET_NAME, config::BUCKET_HOST));
 
   // Copy the modified client request to create a backend request.
   let mut bereq = copy_request(&req);
 
+  // Authenticate the initial request to the origin.
+  set_authentication_headers(&mut bereq);
+
   // Send the request to the backend and assign its response to `beresp`.
-  let mut beresp = bereq.send(BACKEND_NAME)?;
+  let mut beresp = bereq.send(config::BACKEND_NAME)?;
 
   // If backend response is 404, try for index.html
   if is_not_found(&beresp) && !original_path.ends_with("index.html") {
@@ -84,7 +68,8 @@ fn main(mut req: Request) -> Result<Response, Error> {
     bereq.set_path(&format!("{}/index.html", original_path));
 
     // Send the request to the backend.
-    beresp = bereq.send(BACKEND_NAME)?;
+    set_authentication_headers(&mut bereq);
+    beresp = bereq.send(config::BACKEND_NAME)?;
 
     // If file exists, trigger redirect with `/` appended to path.
     // This means the canonical URL for index pages will always end with a trailing slash.
@@ -101,7 +86,8 @@ fn main(mut req: Request) -> Result<Response, Error> {
     bereq.set_path("/404.html");
 
     // Send the request to the backend.
-    beresp = bereq.send(BACKEND_NAME)?;
+    set_authentication_headers(&mut bereq);
+    beresp = bereq.send(config::BACKEND_NAME)?;
   }
 
   filter_headers(&mut beresp);
@@ -138,17 +124,36 @@ fn is_not_found(resp: &Response) -> bool {
   return resp.get_status() == StatusCode::NOT_FOUND || resp.get_status() == StatusCode::FORBIDDEN;
 }
 
+/// Sets authentication headers for a given request.
+fn set_authentication_headers(req: &mut Request) {
+  let now = Utc::now();
+  let sig = awsv4::aws_v4_auth("",  req.get_method().as_str(), req.get_path(), now);
+  req.set_header(AUTHORIZATION, sig);
+  req.set_header("x-amz-content-sha256", hash("".to_string()));
+  req.set_header("x-amz-date", now.format("%Y%m%dT%H%M%SZ").to_string());
+}
+
 /// Removes all headers but those defined in `ALLOWED_HEADERS` from a response.
 fn filter_headers(resp: &mut Response) {
   let mut to_remove: Vec<HeaderName> = Vec::new();
   for header in resp.get_header_names() {
-    if !ALLOWED_HEADERS.contains(header) {
+    if !config::ALLOWED_HEADERS.contains(header) {
       to_remove.push(header.clone());
     }
   }
   for header in to_remove {
     resp.remove_header(header);
   }
+}
+
+/// Create a response to a CORS preflight request.
+fn create_cors_response(allowed_origins: HeaderValue) -> Response {
+  return Response::from_body(Body::new())
+    .with_status(StatusCode::NO_CONTENT)
+    .with_header(ACCESS_CONTROL_ALLOW_ORIGIN, allowed_origins)
+    .with_header(ACCESS_CONTROL_ALLOW_METHODS, "GET,HEAD,POST,OPTIONS")
+    .with_header(ACCESS_CONTROL_MAX_AGE, "86400")
+    .with_header(CACHE_CONTROL, "public, max-age=86400");
 }
 
 /// Create a copy of a request with the same method, URL, and headers.
