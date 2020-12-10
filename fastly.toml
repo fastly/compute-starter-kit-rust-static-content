@@ -1,4 +1,4 @@
-version = 137
+version = 142
 name = "Compute@Edge static content starter kit for Rust"
 description = "Speed up your websites with a Compute@Edge environment that demonstrates serving content from a static bucket, redirects, security and performance headers, and a 404 page."
 authors = ["<oss@fastly.com>"]

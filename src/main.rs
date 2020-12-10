@@ -25,7 +25,7 @@ use crate::awsv4::hash;
 fn main(mut req: Request) -> Result<Response, Error> {
   // Used later to generate CORS headers.
   // Usually you would want an allowlist of domains here, but this example allows any origin to make requests.
-  let allowed_origins = match req.get_header("origin") {
+  let allowed_origins = match req.get_header(ORIGIN) {
     Some(val) => val.clone(),
     _ => HeaderValue::from_str("*").unwrap(),
   };
@@ -57,6 +57,10 @@ fn main(mut req: Request) -> Result<Response, Error> {
 
   // Authenticate the initial request to the origin.
   set_authentication_headers(&mut bereq);
+
+  // Set the cache TTL for the expected result of the request.
+  let ttl = get_cache_ttl(bereq.get_path());
+  bereq.set_ttl(ttl);
 
   // Send the request to the backend and assign its response to `beresp`.
   let mut beresp = bereq.send(config::BACKEND_NAME)?;
@@ -92,31 +96,48 @@ fn main(mut req: Request) -> Result<Response, Error> {
 
   filter_headers(&mut beresp);
 
-  // Apply referrer-policy and HSTS to HTML pages.
-  if let Some(header) = beresp.get_header("content-type") {
+  // Add Cache-Control header to response with same TTL as used internally.
+  beresp.set_header(CACHE_CONTROL, format!("public, max-age={}", ttl));
+
+  // The following headers should only be added to HTML responses.
+  if let Some(header) = beresp.get_header(CONTENT_TYPE) {
     if header.to_str().unwrap().starts_with("text/html") {
-      beresp.set_header(
-        REFERRER_POLICY,
-        "origin-when-cross-origin",
-      );
-      beresp.set_header(
-          STRICT_TRANSPORT_SECURITY,
-          "max-age=2592000",
-      );
+      // Apply referrer-policy and HSTS to HTML pages.
+      beresp.set_header(REFERRER_POLICY, "origin-when-cross-origin",);
+      beresp.set_header(STRICT_TRANSPORT_SECURITY, "max-age=2592000");
+
+      // Apply Access-Control-Allow-Origin to allow cross-origin resource sharing.
+      beresp.set_header(ACCESS_CONTROL_ALLOW_ORIGIN, allowed_origins);
+
+      // Set Content-Security-Policy header to prevent loading content from other origins.
+      beresp.set_header(CONTENT_SECURITY_POLICY, "default-src 'self'; style-src 'self' fonts.googleapis.com; font-src fonts.gstatic.com");
+
+      // Set X-Frame-Options header to prevent other origins embedding the site.
+      beresp.set_header(X_FRAME_OPTIONS, "SAMEORIGIN");
+
+      // For pages using assets, specify that they should be preloaded in the response headers.
+      // TODO
     }
   }
 
-  // Apply Access-Control-Allow-Origin to allow cross-origin resource sharing.
-  beresp.set_header(ACCESS_CONTROL_ALLOW_ORIGIN, allowed_origins);
-
-  // Set Content-Security-Policy header to prevent loading content from other origins.
-  beresp.set_header(CONTENT_SECURITY_POLICY, "default-src 'self'; style-src 'self' fonts.googleapis.com; font-src fonts.gstatic.com");
-
-  // Set X-Frame-Options header to prevent other origins embedding the site.
-  beresp.set_header(X_FRAME_OPTIONS, "SAMEORIGIN");
-
   // Return the backend response to the client.
   Ok(beresp)
+}
+
+fn get_cache_ttl(path: &str) -> u32 {
+  // Assets should be identified with a hash so they can have a long TTL.
+  if path.starts_with("/assets") {
+    return 60*60*24;
+  }
+
+  // Resource pages need up-to-date data, so cache them for less time.
+  // We check the `/` count in the path to determine whether the request is for the index or an individual resource.
+  if path.starts_with("/resources/") && path.split('/').count() > 3 {
+    return 60;
+  }
+
+  // Any other content can be cached for 5 minutes.
+  return 60*5;
 }
 
 /// Determines if a backend response indicates the requested file not existing.
