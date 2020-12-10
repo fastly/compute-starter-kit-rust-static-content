@@ -6,7 +6,7 @@ use fastly::http::header::{CONTENT_LENGTH, CONTENT_TYPE, DATE};
 pub(crate) const BACKEND_NAME: &str = "google_storage";
 
 /// Allowlist of headers for responses to the client.
-pub(crate) const ALLOWED_HEADERS: [HeaderName; 3] = [CONTENT_LENGTH, CONTENT_TYPE, DATE];
+pub(crate) static ALLOWED_HEADERS: [HeaderName; 3] = [CONTENT_LENGTH, CONTENT_TYPE, DATE];
 
 /// The name of the bucket to serve content from. By default, this is an example bucket on a mock endpoint.
 ///

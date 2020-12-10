@@ -67,7 +67,7 @@ pub fn aws_v4_auth(
     let k_signing = sign(k_service.to_vec(), "aws4_request".to_string());
 
     // Final signature
-    let signature = hex::encode(sign(k_signing.to_vec(), string_to_sign.to_string()));
+    let signature = hex::encode(sign(k_signing.to_vec(), string_to_sign));
 
     // Generate the Authorization header value
     format!(

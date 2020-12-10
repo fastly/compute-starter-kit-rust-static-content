@@ -116,12 +116,12 @@ fn main(mut req: Request) -> Result<Response, Error> {
   beresp.set_header(X_FRAME_OPTIONS, "SAMEORIGIN");
 
   // Return the backend response to the client.
-  return Ok(beresp);
+  Ok(beresp)
 }
 
 /// Determines if a backend response indicates the requested file not existing.
 fn is_not_found(resp: &Response) -> bool {
-  return resp.get_status() == StatusCode::NOT_FOUND || resp.get_status() == StatusCode::FORBIDDEN;
+  resp.get_status() == StatusCode::NOT_FOUND || resp.get_status() == StatusCode::FORBIDDEN
 }
 
 /// Sets authentication headers for a given request.
@@ -148,17 +148,17 @@ fn filter_headers(resp: &mut Response) {
 
 /// Create a response to a CORS preflight request.
 fn create_cors_response(allowed_origins: HeaderValue) -> Response {
-  return Response::from_body(Body::new())
+  Response::from_body(Body::new())
     .with_status(StatusCode::NO_CONTENT)
     .with_header(ACCESS_CONTROL_ALLOW_ORIGIN, allowed_origins)
     .with_header(ACCESS_CONTROL_ALLOW_METHODS, "GET,HEAD,POST,OPTIONS")
     .with_header(ACCESS_CONTROL_MAX_AGE, "86400")
-    .with_header(CACHE_CONTROL, "public, max-age=86400");
+    .with_header(CACHE_CONTROL, "public, max-age=86400")
 }
 
 /// Create a copy of a request with the same method, URL, and headers.
 fn copy_request(req: &Request) -> Request {
   let mut new = Request::new(req.get_method(), req.get_url());
   req.get_header_names().for_each(|h| new.set_header(h, req.get_header(h).unwrap()));
-  return new;
+  new
 }
