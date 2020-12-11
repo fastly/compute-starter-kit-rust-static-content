@@ -117,7 +117,7 @@ fn main(mut req: Request) -> Result<Response, Error> {
       beresp.set_header(ACCESS_CONTROL_ALLOW_ORIGIN, allowed_origins);
 
       // Set Content-Security-Policy header to prevent loading content from other origins.
-      beresp.set_header(CONTENT_SECURITY_POLICY, "default-src 'self'; style-src 'self' fonts.googleapis.com; font-src fonts.gstatic.com");
+      beresp.set_header(CONTENT_SECURITY_POLICY, config::CONTENT_SECURITY_POLICY);
 
       // Set X-Frame-Options header to prevent other origins embedding the site.
       beresp.set_header(X_FRAME_OPTIONS, "SAMEORIGIN");
@@ -147,6 +147,7 @@ fn main(mut req: Request) -> Result<Response, Error> {
   Ok(beresp)
 }
 
+/// Determines the cache TTL that should be used for an object at a given path.
 fn get_cache_ttl(path: &str) -> u32 {
   // Assets should be identified with a hash so they can have a long TTL.
   if path.starts_with("/assets") {

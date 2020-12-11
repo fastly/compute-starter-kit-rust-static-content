@@ -15,8 +15,8 @@ Speed up your websites with a Compute@Edge environment that demonstrates serving
 - [x] Serve robots.txt
 - [x] Authenticate requests to the origin with AWS Signature Version 4
 - [x] Add caching policy to content
+- [x] Strip query strings
 - [x] Add `Link: rel=preload` header to pre-fetch JavaScript and CSS
-- [ ] Normalize query strings
 
 ## Usage
 
