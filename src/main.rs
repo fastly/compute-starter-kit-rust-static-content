@@ -46,6 +46,9 @@ fn main(mut req: Request) -> Result<Response, Error> {
     req.set_path(&format!("{}index.html", req.get_path()));
   }
 
+  // Remove the query string to improve cache hit ratio.
+  req.remove_query();
+
   // Assign the path to a variable to be used later.
   let original_path = req.get_path().to_owned();
 
@@ -118,6 +121,11 @@ fn main(mut req: Request) -> Result<Response, Error> {
       // For pages using assets, specify that they should be preloaded in the response headers.
       // TODO
     }
+  }
+
+  // Compress assets.
+  if original_path.starts_with("/assets/") {
+    beresp.set_header("X-Compress-Hint", "on");
   }
 
   // Return the backend response to the client.
