@@ -99,7 +99,7 @@ fn main(mut req: Request) -> Result<Response, Error> {
   }
 
   // Store the body for later use.
-  let body = beresp.take_body().into_string();
+  let body = beresp.take_body().into_bytes();
 
   filter_headers(&mut beresp);
 
@@ -124,8 +124,15 @@ fn main(mut req: Request) -> Result<Response, Error> {
 
       // For pages using assets, specify that they should be preloaded in the response headers.
       let expr = Regex::new(config::ASSET_REGEX).unwrap();
-      for caps in expr.captures_iter(&body) {
-        beresp.append_header(LINK, format!("</assets/{}>; rel=preload;", caps.get(1).unwrap().as_str()));
+      for caps in expr.captures_iter(&String::from_utf8(body.clone()).unwrap()) {
+        let file = caps.get(1).unwrap().as_str();
+        let file_type = match file {
+          _ if file.ends_with(".css") => "style",
+          _ if file.ends_with(".js") => "script",
+          _ if file.ends_with(".svg") => "image",
+          _ => "fetch"
+        };
+        beresp.append_header(LINK, format!("</assets/{}>; rel=preload; as={};", file, file_type));
       }
     }
   }
@@ -136,7 +143,7 @@ fn main(mut req: Request) -> Result<Response, Error> {
   }
 
   // Return the backend response to the client.
-  beresp.set_body(body);
+  beresp.set_body(Body::from(body));
   Ok(beresp)
 }
 
