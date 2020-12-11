@@ -132,7 +132,7 @@ fn main(mut req: Request) -> Result<Response, Error> {
           _ if file.ends_with(".svg") => "image",
           _ => "fetch"
         };
-        beresp.append_header(LINK, format!("</assets/{}>; rel=preload; as={};", file, file_type));
+        beresp.append_header(LINK, format!("<{}>; rel=preload; as={};", file, file_type));
       }
     }
   }
