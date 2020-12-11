@@ -3,12 +3,13 @@
 mod config;
 mod awsv4;
 
+use regex::Regex;
 use chrono::Utc;
 use fastly::{Body, Error, Request, Response, http::header::AUTHORIZATION};
 use fastly::http::header::{
   ACCESS_CONTROL_ALLOW_METHODS, ACCESS_CONTROL_ALLOW_ORIGIN,
   ACCESS_CONTROL_MAX_AGE, ACCESS_CONTROL_REQUEST_HEADERS, ACCESS_CONTROL_REQUEST_METHOD,
-  CACHE_CONTROL, ORIGIN, CONTENT_SECURITY_POLICY, X_FRAME_OPTIONS,
+  CACHE_CONTROL, ORIGIN, CONTENT_SECURITY_POLICY, X_FRAME_OPTIONS, LINK,
   CONTENT_TYPE, STRICT_TRANSPORT_SECURITY, REFERRER_POLICY, LOCATION
 };
 use fastly::http::{StatusCode, HeaderValue, header::HeaderName, Method};
@@ -97,6 +98,9 @@ fn main(mut req: Request) -> Result<Response, Error> {
     beresp = bereq.send(config::BACKEND_NAME)?;
   }
 
+  // Store the body for later use.
+  let body = beresp.take_body().into_string();
+
   filter_headers(&mut beresp);
 
   // Add Cache-Control header to response with same TTL as used internally.
@@ -119,7 +123,10 @@ fn main(mut req: Request) -> Result<Response, Error> {
       beresp.set_header(X_FRAME_OPTIONS, "SAMEORIGIN");
 
       // For pages using assets, specify that they should be preloaded in the response headers.
-      // TODO
+      let expr = Regex::new(config::ASSET_REGEX).unwrap();
+      for caps in expr.captures_iter(&body) {
+        beresp.append_header(LINK, format!("</assets/{}>; rel=preload;", caps.get(1).unwrap().as_str()));
+      }
     }
   }
 
@@ -129,6 +136,7 @@ fn main(mut req: Request) -> Result<Response, Error> {
   }
 
   // Return the backend response to the client.
+  beresp.set_body(body);
   Ok(beresp)
 }
 

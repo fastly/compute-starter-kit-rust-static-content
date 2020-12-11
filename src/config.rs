@@ -27,3 +27,6 @@ pub(crate) const BUCKET_ACCESS_KEY_ID: &str = "GOOG1E...<access key>";
 /// Secret access key for the storage service.
 /// Generated alongside the access key ID.
 pub(crate) const BUCKET_SECRET_ACCESS_KEY: &str = "<secret key>";
+
+/// The regular expression to use when looking for assets to preload on a page.
+pub(crate) const ASSET_REGEX: &str = r#"\s(?:src|href)="/assets/(.+?)""#;
