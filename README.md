@@ -36,6 +36,8 @@ For authenticated buckets, set these values too:
 Optionally, you can update these values to configure the default functionality of the starter kit:
 
  * `ALLOWED_HEADERS` - The headers that you want to allow from the origin to be passed to the user
+ * `ASSET_REGEX` - The regex used to determine assets to be preloaded for a given response body. Defaults to files in `/assets/`.
+ * `CONTENT_SECURITY_POLICY` - The value of the `Content-Security-Policy` header used to determine origins that resources can be loaded from.
 
 If your bucket doesn't require authentication, make sure to modify the `set_authentication_headers` function in `src/main.rs` to skip the generation of the AWSv4 signature.
 
