@@ -20,7 +20,7 @@ Speed up your websites with a Compute@Edge environment that demonstrates serving
 
 ## Usage
 
-If your content is already in a public or private bucket on an AWSv4-supported cloud storage provider, you can get started right away by modifying `src/config.rs`. The values you will need to set are:
+If your content is already in a bucket which is public to the internet, or in a private bucket which supports AWSv4-compatible authetication, you can get started right away by modifying `src/config.rs`. The values you will need to set are:
 
  * `BACKEND_NAME` - This should match the name of your storage backend in the Fastly UI
  * `BUCKET_NAME` - The name of the bucket you want to access

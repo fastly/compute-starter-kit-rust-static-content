@@ -164,7 +164,7 @@ fn get_cache_ttl(path: &str) -> u32 {
   return 60*5;
 }
 
-/// Determines if a backend response indicates the requested file not existing.
+/// Determines if a backend response indicates the requested file doesn't exist.
 fn is_not_found(resp: &Response) -> bool {
   resp.get_status() == StatusCode::NOT_FOUND || resp.get_status() == StatusCode::FORBIDDEN
 }
