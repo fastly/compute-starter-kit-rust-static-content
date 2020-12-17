@@ -6,36 +6,36 @@ Speed up your websites with a Compute@Edge environment that demonstrates serving
 
 ## Features
 
-- [x] Prefix the backend bucket hostname with your bucket prefix
-- [x] Serve a 404 page if the requested page is not found
-- [x] Remove extra headers sent by your storage provider, such as `x-goog-*`
-- [x] Add Content Security Policy and other security-related headers
-- [x] Respond to CORS preflight requests
-- [x] Redirect requests for directories to index.html
-- [x] Serve robots.txt
-- [x] Authenticate requests to the origin with AWS Signature Version 4
-- [x] Add caching policy to content
-- [x] Strip query strings
-- [x] Add `Link: rel=preload` header to pre-fetch JavaScript and CSS
+ * Prefix the backend bucket hostname with your bucket prefix
+ * Serve a 404 page if the requested page is not found
+ * Remove extra headers sent by your storage provider, such as `x-goog-*`
+ * Add Content Security Policy and other security-related headers
+ * Respond to CORS preflight requests
+ * Redirect requests for directories to index.html
+ * Serve robots.txt
+ * Authenticate requests to the origin with AWS Signature Version 4
+ * Add caching policy to content
+ * Strip query strings
+ * Add `Link: rel=preload` header to pre-fetch JavaScript and CSS
 
 ## Usage
 
-If your content is already in a bucket which is public to the internet, or in a private bucket which supports AWSv4-compatible authetication, you can get started right away by modifying `src/config.rs`. The values you will need to set are:
+If your content is already in a bucket which is public to the internet, or in a private bucket which supports AWSv4-compatible authentication, you can get started right away by modifying `src/config.rs`. The values you will need to set are:
 
- * `BACKEND_NAME` - This should match the name of your storage backend in the Fastly UI
- * `BUCKET_NAME` - The name of the bucket you want to access
- * `BUCKET_HOST` - The hostname of the storage service, e.g. `storage.googleapis.com`
+ * `BACKEND_NAME` - This should match the name of your storage backend in the Fastly UI.
+ * `BUCKET_NAME` - The name of the bucket you want to access.
+ * `BUCKET_HOST` - The hostname of the storage service, e.g. `storage.googleapis.com`, excluding your bucket prefix.
 
-For authenticated buckets, set these values too:
+For private buckets, set these values also:
 
  * `BUCKET_SERVICE` - The service, as defined in your provider's AWSv4 docs, that you are using. `s3` for S3 or `storage` for GCS.
  * `BUCKET_REGION` - The region, as defined in your provider's AWSv4 docs, that you are using. `auto` is fine for GCS.
- * `BUCKET_ACCESS_KEY_ID` - The HMAC access key ID for your service account with read access
- * `BUCKET_SECRET_ACCESS_KEY` - The HMAC secret key for your service account with read access
+ * `BUCKET_ACCESS_KEY_ID` - The HMAC access key ID for your service account with read access.
+ * `BUCKET_SECRET_ACCESS_KEY` - The HMAC secret key for your service account with read access.
 
 Optionally, you can update these values to configure the default functionality of the starter kit:
 
- * `ALLOWED_HEADERS` - The headers that you want to allow from the origin to be passed to the user
+ * `ALLOWED_HEADERS` - The headers that you want to allow from the origin to be passed to the user. This means headers such as `x-goog-metadata` will be removed by default.
  * `ASSET_REGEX` - The regex used to determine assets to be preloaded for a given response body. Defaults to files in `/assets/`.
  * `CONTENT_SECURITY_POLICY` - The value of the `Content-Security-Policy` header used to determine origins that resources can be loaded from.
 
