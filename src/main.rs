@@ -135,9 +135,11 @@ fn main(mut req: Request) -> Result<Response, Error> {
                file.ends_with(".woff2") ||
                file.ends_with(".woff") ||
                file.ends_with(".tff") => "font",
-          _ => "fetch"
+          _ => "none"
         };
-        beresp.append_header(LINK, format!("<{}>; rel=preload; as={};", file, file_type));
+        if file_type != "none" {
+          beresp.append_header(LINK, format!("<{}>; rel=preload; as={};", file, file_type));
+        }
       }
     }
   }
