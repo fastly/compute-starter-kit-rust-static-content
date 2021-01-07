@@ -20,6 +20,12 @@ Speed up your websites with a Compute@Edge environment that demonstrates serving
 
 ## Usage
 
+When initializing your project, the Fastly CLI will prompt you to enter a `Backend`. You can enter your bucket host here, or just enter `mock-s3.edgecompute.app` if you want to experiment with our mock backend.
+
+```
+Backend (originless, hostname or IP address): [originless] mock-s3.edgecompute.app
+```
+
 If your content is already in a bucket which is public to the internet, or in a private bucket which supports AWSv4-compatible authentication, you can get started right away by modifying `src/config.rs`. The values you will need to set are:
 
  * `BACKEND_NAME` - This should match the name of your storage backend in the Fastly UI.
