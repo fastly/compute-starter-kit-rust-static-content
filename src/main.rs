@@ -126,10 +126,15 @@ fn main(mut req: Request) -> Result<Response, Error> {
       let expr = Regex::new(config::ASSET_REGEX).unwrap();
       for caps in expr.captures_iter(&String::from_utf8(body.clone()).unwrap()) {
         let file = caps.get(1).unwrap().as_str();
+        // We are matching based on file extension here, but you could modify this to set the
+        // content type based on the file path if you prefer.
         let file_type = match file {
           _ if file.ends_with(".css") => "style",
           _ if file.ends_with(".js") => "script",
-          _ if file.ends_with(".svg") => "image",
+          _ if file.ends_with(".eot") ||
+               file.ends_with(".woff2") ||
+               file.ends_with(".woff") ||
+               file.ends_with(".tff") => "font",
           _ => "fetch"
         };
         beresp.append_header(LINK, format!("<{}>; rel=preload; as={};", file, file_type));
@@ -148,6 +153,7 @@ fn main(mut req: Request) -> Result<Response, Error> {
 }
 
 /// Determines the cache TTL that should be used for an object at a given path.
+/// The paths used here are just examples, you can modify this however you want to cache your objects intelligently.
 fn get_cache_ttl(path: &str) -> u32 {
   // Assets should be identified with a hash so they can have a long TTL.
   if path.starts_with("/assets") {
