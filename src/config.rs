@@ -32,4 +32,5 @@ pub(crate) const BUCKET_SECRET_ACCESS_KEY: &str = "<secret key>";
 pub(crate) const ASSET_REGEX: &str = r#"\s(?:src|href)="(/assets/.+?)""#;
 
 /// Define a Content Security Policy for content that can load on your site.
-pub(crate) const CONTENT_SECURITY_POLICY: &str = "default-src 'self'; style-src 'self' fonts.googleapis.com; font-src fonts.gstatic.com";
+pub(crate) const CONTENT_SECURITY_POLICY: &str =
+    "default-src 'self'; style-src 'self' fonts.googleapis.com; font-src fonts.gstatic.com";

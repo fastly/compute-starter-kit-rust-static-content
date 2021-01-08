@@ -2,7 +2,10 @@ use chrono::DateTime;
 use chrono::Utc;
 use hmac_sha256::{Hash, HMAC};
 
-use crate::config::{BUCKET_NAME, BUCKET_REGION, BUCKET_HOST, BUCKET_ACCESS_KEY_ID, BUCKET_SECRET_ACCESS_KEY, BUCKET_SERVICE};
+use crate::config::{
+    BUCKET_ACCESS_KEY_ID, BUCKET_HOST, BUCKET_NAME, BUCKET_REGION, BUCKET_SECRET_ACCESS_KEY,
+    BUCKET_SERVICE,
+};
 
 /// SHA256 HMAC
 fn sign(key: Vec<u8>, input: String) -> [u8; 32] {
@@ -15,13 +18,8 @@ pub fn hash(input: String) -> String {
 }
 
 /// Generate an AWSv4 signature for a given request.
-pub fn aws_v4_auth(
-    payload: &str,
-    method: &str,
-    path: &str,
-    now: DateTime<Utc>
-) -> String {
-    let amz_content_256 =  hash(payload.to_string());
+pub fn aws_v4_auth(payload: &str, method: &str, path: &str, now: DateTime<Utc>) -> String {
+    let amz_content_256 = hash(payload.to_string());
     let x_amz_date = now.format("%Y%m%dT%H%M%SZ").to_string();
     let x_amz_today = now.format("%Y%m%d").to_string();
 
@@ -32,7 +30,9 @@ pub fn aws_v4_auth(
     // These must be sorted alphabetically
     let canonical_headers = format!(
         "host:{}\nx-amz-content-sha256:{}\nx-amz-date:{}\n",
-        format!("{}.{}", BUCKET_NAME, BUCKET_HOST), amz_content_256, x_amz_date
+        format!("{}.{}", BUCKET_NAME, BUCKET_HOST),
+        amz_content_256,
+        x_amz_date
     );
 
     let canonical_query = "";
@@ -50,7 +50,10 @@ pub fn aws_v4_auth(
         amz_content_256
     );
 
-    let scope = format!("{}/{}/{}/aws4_request", x_amz_today, BUCKET_REGION, BUCKET_SERVICE);
+    let scope = format!(
+        "{}/{}/{}/aws4_request",
+        x_amz_today, BUCKET_REGION, BUCKET_SERVICE
+    );
 
     let signed_canonical_request = hash(canonical_request);
 

@@ -41,7 +41,7 @@ jobs:
       run: cargo install cargo-audit
       shell: bash
     - name: fmt
-      run: cargo fmt
+      run: cargo fmt -- --check
       shell: bash
     - name: clippy
       run: cargo clippy
