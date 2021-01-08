@@ -7,12 +7,12 @@ use crate::awsv4::hash;
 use chrono::Utc;
 use fastly::http::header::{
     ACCESS_CONTROL_ALLOW_METHODS, ACCESS_CONTROL_ALLOW_ORIGIN, ACCESS_CONTROL_MAX_AGE,
-    ACCESS_CONTROL_REQUEST_HEADERS, ACCESS_CONTROL_REQUEST_METHOD, CACHE_CONTROL,
+    ACCESS_CONTROL_REQUEST_HEADERS, ACCESS_CONTROL_REQUEST_METHOD, AUTHORIZATION, CACHE_CONTROL,
     CONTENT_SECURITY_POLICY, CONTENT_TYPE, LINK, LOCATION, ORIGIN, REFERRER_POLICY,
     STRICT_TRANSPORT_SECURITY, X_FRAME_OPTIONS,
 };
 use fastly::http::{header::HeaderName, HeaderValue, Method, StatusCode};
-use fastly::{http::header::AUTHORIZATION, Body, Error, Request, Response};
+use fastly::{Error, Request, Response};
 use regex::Regex;
 
 /// The entry point for your application.
@@ -28,23 +28,27 @@ fn main(mut req: Request) -> Result<Response, Error> {
     // Usually you would want an allowlist of domains here, but this example allows any origin to make requests.
     let allowed_origins = match req.get_header(ORIGIN) {
         Some(val) => val.clone(),
-        _ => HeaderValue::from_str("*").unwrap(),
+        _ => HeaderValue::from_static("*"),
     };
 
     // Respond to CORS preflight requests.
     if req.get_method() == Method::OPTIONS
-        && req.get_header(ORIGIN).is_some()
-        && (req.get_header(ACCESS_CONTROL_REQUEST_HEADERS).is_some()
-            || req.get_header(ACCESS_CONTROL_REQUEST_METHOD).is_some())
+        && req.contains_header(ORIGIN)
+        && (req.contains_header(ACCESS_CONTROL_REQUEST_HEADERS)
+            || req.contains_header(ACCESS_CONTROL_REQUEST_METHOD))
     {
         return Ok(create_cors_response(allowed_origins));
     }
 
+    // Only permit GET requests.
+    if req.get_method() != Method::GET {
+        return Ok(Response::from_body("Access denied").with_status(StatusCode::FORBIDDEN));
+    }
+
     // Respond to requests for robots.txt.
     if req.get_path() == "/robots.txt" {
-        return Ok(
-            Response::from_body("User-agent: *\nAllow: /").with_header(CONTENT_TYPE, "text/plain")
-        );
+        return Ok(Response::from_body("User-agent: *\nAllow: /")
+            .with_content_type(fastly::mime::TEXT_PLAIN));
     }
 
     // Append index.html if path is a directory.
@@ -65,7 +69,7 @@ fn main(mut req: Request) -> Result<Response, Error> {
     );
 
     // Copy the modified client request to create a backend request.
-    let mut bereq = copy_request(&req);
+    let mut bereq = req.clone_without_body();
 
     // Authenticate the initial request to the origin.
     set_authentication_headers(&mut bereq);
@@ -80,7 +84,7 @@ fn main(mut req: Request) -> Result<Response, Error> {
     // If backend response is 404, try for index.html
     if is_not_found(&beresp) && !original_path.ends_with("index.html") {
         // Copy the original request and append index.html to the path.
-        bereq = copy_request(&req);
+        bereq = req.clone_without_body();
         bereq.set_path(&format!("{}/index.html", original_path));
 
         // Send the request to the backend.
@@ -90,8 +94,7 @@ fn main(mut req: Request) -> Result<Response, Error> {
         // If file exists, trigger redirect with `/` appended to path.
         // This means the canonical URL for index pages will always end with a trailing slash.
         if !is_not_found(&beresp) {
-            beresp = Response::new()
-                .with_status(StatusCode::MOVED_PERMANENTLY)
+            beresp = Response::from_status(StatusCode::MOVED_PERMANENTLY)
                 .with_header(LOCATION, &format!("{}/", original_path));
             return Ok(beresp);
         }
@@ -100,7 +103,7 @@ fn main(mut req: Request) -> Result<Response, Error> {
     // If backend response is still 404, serve the 404.html file from the bucket.
     if is_not_found(&beresp) {
         // Copy the original request and replace the path with /404.html.
-        bereq = copy_request(&req);
+        bereq = req.clone_without_body();
         bereq.set_path("/404.html");
 
         // Send the request to the backend.
@@ -164,7 +167,7 @@ fn main(mut req: Request) -> Result<Response, Error> {
     }
 
     // Return the backend response to the client.
-    beresp.set_body(Body::from(body));
+    beresp.set_body(body);
     Ok(beresp)
 }
 
@@ -215,18 +218,9 @@ fn filter_headers(resp: &mut Response) {
 
 /// Create a response to a CORS preflight request.
 fn create_cors_response(allowed_origins: HeaderValue) -> Response {
-    Response::from_body(Body::new())
-        .with_status(StatusCode::NO_CONTENT)
+    Response::from_status(StatusCode::NO_CONTENT)
         .with_header(ACCESS_CONTROL_ALLOW_ORIGIN, allowed_origins)
         .with_header(ACCESS_CONTROL_ALLOW_METHODS, "GET,HEAD,POST,OPTIONS")
         .with_header(ACCESS_CONTROL_MAX_AGE, "86400")
         .with_header(CACHE_CONTROL, "public, max-age=86400")
-}
-
-/// Create a copy of a request with the same method, URL, and headers.
-fn copy_request(req: &Request) -> Request {
-    let mut new = Request::new(req.get_method(), req.get_url());
-    req.get_header_names()
-        .for_each(|h| new.set_header(h, req.get_header(h).unwrap()));
-    new
 }
