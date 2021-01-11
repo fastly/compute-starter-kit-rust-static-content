@@ -8,8 +8,8 @@ use crate::config::{
 };
 
 /// SHA256 HMAC
-fn sign(key: Vec<u8>, input: String) -> [u8; 32] {
-    HMAC::mac(input.as_bytes(), &key)
+fn sign<K: AsRef<[u8]>, I: AsRef<[u8]>>(key: &K, input: I) -> [u8; 32] {
+    HMAC::mac(input.as_ref(), key.as_ref())
 }
 
 /// Create a hex output of the hash
@@ -18,8 +18,9 @@ pub fn hash(input: String) -> String {
 }
 
 /// Generate an AWSv4 signature for a given request.
-pub fn aws_v4_auth(payload: &str, method: &str, path: &str, now: DateTime<Utc>) -> String {
-    let amz_content_256 = hash(payload.to_string());
+/// Requests with payloads are not supported.
+pub fn aws_v4_auth(method: &str, path: &str, now: DateTime<Utc>) -> String {
+    let amz_content_256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"; // empty hash
     let x_amz_date = now.format("%Y%m%dT%H%M%SZ").to_string();
     let x_amz_today = now.format("%Y%m%d").to_string();
 
@@ -50,7 +51,7 @@ pub fn aws_v4_auth(payload: &str, method: &str, path: &str, now: DateTime<Utc>) 
         amz_content_256
     );
 
-    let scope = format!(
+    let credential_scope = format!(
         "{}/{}/{}/aws4_request",
         x_amz_today, BUCKET_REGION, BUCKET_SERVICE
     );
@@ -59,22 +60,28 @@ pub fn aws_v4_auth(payload: &str, method: &str, path: &str, now: DateTime<Utc>) 
 
     let string_to_sign = format!(
         "AWS4-HMAC-SHA256\n{}\n{}\n{}",
-        x_amz_date, scope, signed_canonical_request
+        x_amz_date, credential_scope, signed_canonical_request
     );
 
     // Generate the signature through the multi-step signing process
-    let k_secret = format!("AWS4{}", &BUCKET_SECRET_ACCESS_KEY);
-    let k_date = sign(k_secret.as_bytes().to_vec(), x_amz_today);
-    let k_region = sign(k_date.to_vec(), BUCKET_REGION.to_string());
-    let k_service = sign(k_region.to_vec(), BUCKET_SERVICE.to_string());
-    let k_signing = sign(k_service.to_vec(), "aws4_request".to_string());
+    let signature = [
+        BUCKET_REGION,
+        BUCKET_SERVICE,
+        "aws4_request",
+        &string_to_sign,
+    ]
+    .iter()
+    .fold(
+        sign(&format!("AWS4{}", BUCKET_SECRET_ACCESS_KEY), &x_amz_today),
+        |acc, x| sign(&acc, x),
+    );
 
-    // Final signature
-    let signature = hex::encode(sign(k_signing.to_vec(), string_to_sign));
-
-    // Generate the Authorization header value
+    // Compose authorization header value
     format!(
-        "AWS4-HMAC-SHA256 Credential={}/{}, SignedHeaders={}, Signature={}",
-        BUCKET_ACCESS_KEY_ID, scope, signed_headers, signature
+        "AWS4-HMAC-SHA256 Credential={}/{},SignedHeaders={},Signature={}",
+        BUCKET_ACCESS_KEY_ID,
+        credential_scope,
+        signed_headers,
+        hex::encode(signature)
     )
 }

@@ -5,13 +5,7 @@ mod config;
 
 use crate::awsv4::hash;
 use chrono::Utc;
-use fastly::http::header::{
-    ACCESS_CONTROL_ALLOW_METHODS, ACCESS_CONTROL_ALLOW_ORIGIN, ACCESS_CONTROL_MAX_AGE,
-    ACCESS_CONTROL_REQUEST_HEADERS, ACCESS_CONTROL_REQUEST_METHOD, AUTHORIZATION, CACHE_CONTROL,
-    CONTENT_SECURITY_POLICY, CONTENT_TYPE, LINK, LOCATION, ORIGIN, REFERRER_POLICY,
-    STRICT_TRANSPORT_SECURITY, X_FRAME_OPTIONS,
-};
-use fastly::http::{header::HeaderName, HeaderValue, Method, StatusCode};
+use fastly::http::{header, HeaderValue, Method, StatusCode};
 use fastly::{Error, Request, Response};
 use regex::Regex;
 
@@ -26,16 +20,16 @@ use regex::Regex;
 fn main(mut req: Request) -> Result<Response, Error> {
     // Used later to generate CORS headers.
     // Usually you would want an allowlist of domains here, but this example allows any origin to make requests.
-    let allowed_origins = match req.get_header(ORIGIN) {
+    let allowed_origins = match req.get_header(header::ORIGIN) {
         Some(val) => val.clone(),
         _ => HeaderValue::from_static("*"),
     };
 
     // Respond to CORS preflight requests.
     if req.get_method() == Method::OPTIONS
-        && req.contains_header(ORIGIN)
-        && (req.contains_header(ACCESS_CONTROL_REQUEST_HEADERS)
-            || req.contains_header(ACCESS_CONTROL_REQUEST_METHOD))
+        && req.contains_header(header::ORIGIN)
+        && (req.contains_header(header::ACCESS_CONTROL_REQUEST_HEADERS)
+            || req.contains_header(header::ACCESS_CONTROL_REQUEST_METHOD))
     {
         return Ok(create_cors_response(allowed_origins));
     }
@@ -47,7 +41,7 @@ fn main(mut req: Request) -> Result<Response, Error> {
 
     // Respond to requests for robots.txt.
     if req.get_path() == "/robots.txt" {
-        return Ok(Response::from_body("User-agent: *\nAllow: /")
+        return Ok(Response::from_body("User-agent: *\nAllow: /\n")
             .with_content_type(fastly::mime::TEXT_PLAIN));
     }
 
@@ -64,7 +58,7 @@ fn main(mut req: Request) -> Result<Response, Error> {
 
     // Set the `Host` header to the bucket host rather than our C@E endpoint.
     req.set_header(
-        "Host",
+        header::HOST,
         format!("{}.{}", config::BUCKET_NAME, config::BUCKET_HOST),
     );
 
@@ -95,7 +89,7 @@ fn main(mut req: Request) -> Result<Response, Error> {
         // This means the canonical URL for index pages will always end with a trailing slash.
         if !is_not_found(&beresp) {
             beresp = Response::from_status(StatusCode::MOVED_PERMANENTLY)
-                .with_header(LOCATION, &format!("{}/", original_path));
+                .with_header(header::LOCATION, &format!("{}/", original_path));
             return Ok(beresp);
         }
     }
@@ -117,27 +111,27 @@ fn main(mut req: Request) -> Result<Response, Error> {
     filter_headers(&mut beresp);
 
     // Add Cache-Control header to response with same TTL as used internally.
-    beresp.set_header(CACHE_CONTROL, format!("public, max-age={}", ttl));
+    beresp.set_header(header::CACHE_CONTROL, format!("public, max-age={}", ttl));
 
     // The following headers should only be added to HTML responses.
-    if let Some(header) = beresp.get_header(CONTENT_TYPE) {
+    if let Some(header) = beresp.get_header(header::CONTENT_TYPE) {
         if header.to_str().unwrap().starts_with("text/html") {
             // Apply referrer-policy and HSTS to HTML pages.
-            beresp.set_header(REFERRER_POLICY, "origin-when-cross-origin");
-            beresp.set_header(STRICT_TRANSPORT_SECURITY, "max-age=2592000");
+            beresp.set_header(header::REFERRER_POLICY, "origin-when-cross-origin");
+            beresp.set_header(header::STRICT_TRANSPORT_SECURITY, "max-age=2592000");
 
             // Apply Access-Control-Allow-Origin to allow cross-origin resource sharing.
-            beresp.set_header(ACCESS_CONTROL_ALLOW_ORIGIN, allowed_origins);
+            beresp.set_header(header::ACCESS_CONTROL_ALLOW_ORIGIN, allowed_origins);
 
             // Set Content-Security-Policy header to prevent loading content from other origins.
-            beresp.set_header(CONTENT_SECURITY_POLICY, config::CONTENT_SECURITY_POLICY);
+            beresp.set_header(header::CONTENT_SECURITY_POLICY, config::CONTENT_SECURITY_POLICY);
 
             // Set X-Frame-Options header to prevent other origins embedding the site.
-            beresp.set_header(X_FRAME_OPTIONS, "SAMEORIGIN");
+            beresp.set_header(header::X_FRAME_OPTIONS, "SAMEORIGIN");
 
             // For pages using assets, specify that they should be preloaded in the response headers.
             let expr = Regex::new(config::ASSET_REGEX).unwrap();
-            for caps in expr.captures_iter(&String::from_utf8(body.clone()).unwrap()) {
+            for caps in expr.captures_iter(std::str::from_utf8(&body).unwrap()) {
                 let path = caps.get(1).unwrap().as_str();
                 let file = match path.find('?') {
                     Some(i) => &path[..i],
@@ -155,7 +149,7 @@ fn main(mut req: Request) -> Result<Response, Error> {
                     Some("eot") | Some("woff2") | Some("woff") | Some("tff") => "font",
                     _ => continue,
                 };
-                beresp.append_header(LINK, format!("<{}>; rel=preload; as={};", path, file_type));
+                beresp.append_header(header::LINK, format!("<{}>; rel=preload; as={};", path, file_type));
             }
         }
     }
@@ -195,21 +189,26 @@ fn is_not_found(resp: &Response) -> bool {
 
 /// Sets authentication headers for a given request.
 fn set_authentication_headers(req: &mut Request) {
+    // Ensure that request is a GET to prevent signing write operations
+    if req.get_method() != Method::GET {
+        return;
+    }
+
     let now = Utc::now();
-    let sig = awsv4::aws_v4_auth("", req.get_method().as_str(), req.get_path(), now);
-    req.set_header(AUTHORIZATION, sig);
+    let sig = awsv4::aws_v4_auth(req.get_method().as_str(), req.get_path(), now);
+    req.set_header(header::AUTHORIZATION, sig);
     req.set_header("x-amz-content-sha256", hash("".to_string()));
     req.set_header("x-amz-date", now.format("%Y%m%dT%H%M%SZ").to_string());
 }
 
 /// Removes all headers but those defined in `ALLOWED_HEADERS` from a response.
 fn filter_headers(resp: &mut Response) {
-    let mut to_remove: Vec<HeaderName> = Vec::new();
-    for header in resp.get_header_names() {
-        if !config::ALLOWED_HEADERS.contains(header) {
-            to_remove.push(header.clone());
-        }
-    }
+    let to_remove: Vec<_> = resp
+        .get_header_names()
+        .filter(|header| !config::ALLOWED_HEADERS.contains(header))
+        .cloned()
+        .collect();
+
     for header in to_remove {
         resp.remove_header(header);
     }
@@ -218,8 +217,8 @@ fn filter_headers(resp: &mut Response) {
 /// Create a response to a CORS preflight request.
 fn create_cors_response(allowed_origins: HeaderValue) -> Response {
     Response::from_status(StatusCode::NO_CONTENT)
-        .with_header(ACCESS_CONTROL_ALLOW_ORIGIN, allowed_origins)
-        .with_header(ACCESS_CONTROL_ALLOW_METHODS, "GET,HEAD,POST,OPTIONS")
-        .with_header(ACCESS_CONTROL_MAX_AGE, "86400")
-        .with_header(CACHE_CONTROL, "public, max-age=86400")
+        .with_header(header::ACCESS_CONTROL_ALLOW_ORIGIN, allowed_origins)
+        .with_header(header::ACCESS_CONTROL_ALLOW_METHODS, "GET,HEAD,POST,OPTIONS")
+        .with_header(header::ACCESS_CONTROL_MAX_AGE, "86400")
+        .with_header(header::CACHE_CONTROL, "public, max-age=86400")
 }

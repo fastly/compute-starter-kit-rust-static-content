@@ -1,12 +1,12 @@
 use fastly::http::header::HeaderName;
-use fastly::http::header::{CONTENT_LENGTH, CONTENT_TYPE, DATE};
+use fastly::http::header::{CONTENT_LENGTH, CONTENT_TYPE};
 
 /// This should be changed to match the name of your storage backend. See the the `Hosts` section of
 /// the Fastly WASM service UI for more information.
 pub(crate) const BACKEND_NAME: &str = "mock-s3.edgecompute.app";
 
 /// Allowlist of headers for responses to the client.
-pub(crate) static ALLOWED_HEADERS: [HeaderName; 3] = [CONTENT_LENGTH, CONTENT_TYPE, DATE];
+pub(crate) static ALLOWED_HEADERS: [HeaderName; 2] = [CONTENT_LENGTH, CONTENT_TYPE];
 
 /// The name of the bucket to serve content from. By default, this is an example bucket on a mock endpoint.
 pub(crate) const BUCKET_NAME: &str = "mock-s3";
