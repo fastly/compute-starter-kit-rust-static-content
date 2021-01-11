@@ -138,25 +138,24 @@ fn main(mut req: Request) -> Result<Response, Error> {
             // For pages using assets, specify that they should be preloaded in the response headers.
             let expr = Regex::new(config::ASSET_REGEX).unwrap();
             for caps in expr.captures_iter(&String::from_utf8(body.clone()).unwrap()) {
-                let file = caps.get(1).unwrap().as_str();
+                let path = caps.get(1).unwrap().as_str();
+                let file = match path.find('?') {
+                    Some(i) => &path[..i],
+                    None => path,
+                };
+
                 // We are matching based on file extension here, but you could modify this to set the
                 // content type based on the file path if you prefer.
-                let file_type = match file {
-                    _ if file.ends_with(".css") => "style",
-                    _ if file.ends_with(".js") => "script",
-                    _ if file.ends_with(".eot")
-                        || file.ends_with(".woff2")
-                        || file.ends_with(".woff")
-                        || file.ends_with(".tff") =>
-                    {
-                        "font"
-                    }
-                    _ => "none",
+                let file_type = match std::path::Path::new(file)
+                    .extension()
+                    .and_then(|e| e.to_str())
+                {
+                    Some("css") => "style",
+                    Some("js") => "script",
+                    Some("eot") | Some("woff2") | Some("woff") | Some("tff") => "font",
+                    _ => continue,
                 };
-                if file_type != "none" {
-                    beresp
-                        .append_header(LINK, format!("<{}>; rel=preload; as={};", file, file_type));
-                }
+                beresp.append_header(LINK, format!("<{}>; rel=preload; as={};", path, file_type));
             }
         }
     }
