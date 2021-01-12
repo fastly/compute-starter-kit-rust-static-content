@@ -106,9 +106,6 @@ fn main(mut req: Request) -> Result<Response, Error> {
         beresp = bereq.send(config::BACKEND_NAME)?;
     }
 
-    // Store the body for later use.
-    let body = beresp.take_body().into_bytes();
-
     filter_headers(&mut beresp);
 
     // Add Cache-Control header to response with same TTL as used internally.
@@ -132,7 +129,7 @@ fn main(mut req: Request) -> Result<Response, Error> {
 
             // For pages using assets, specify that they should be preloaded in the response headers.
             let expr = Regex::new(config::ASSET_REGEX).unwrap();
-            for caps in expr.captures_iter(std::str::from_utf8(&body).unwrap()) {
+            for caps in expr.captures_iter(&beresp.take_body_str()) {
                 let path = caps.get(1).unwrap().as_str();
                 let file = match path.find('?') {
                     Some(i) => &path[..i],
@@ -161,7 +158,6 @@ fn main(mut req: Request) -> Result<Response, Error> {
     }
 
     // Return the backend response to the client.
-    beresp.set_body(body);
     Ok(beresp)
 }
 
