@@ -20,13 +20,9 @@ pub(crate) const BUCKET_SERVICE: &str = "storage";
 /// The storage service region to use.
 pub(crate) const BUCKET_REGION: &str = "auto";
 
-/// Access key ID for the storage service.
-/// Generate this with `$ gsutil hmac create <service account email>`
-pub(crate) const BUCKET_ACCESS_KEY_ID: &str = "GOOG1E...<access key>";
-
-/// Secret access key for the storage service.
-/// Generated alongside the access key ID.
-pub(crate) const BUCKET_SECRET_ACCESS_KEY: &str = "<secret key>";
+// If auth is required, configure your access keys in an edge dictionary named "bucket_auth":
+/// access_key_id
+/// secret_access_key
 
 /// The regular expression to use when looking for assets to preload on a page.
 pub(crate) const ASSET_REGEX: &str = r#"(?:script|link)[^>]+(?:src|href)="(/assets/.+?)""#;

@@ -3,6 +3,7 @@
 mod awsv4;
 mod config;
 
+use fastly::Dictionary;
 use crate::awsv4::hash;
 use chrono::Utc;
 use fastly::http::{header, HeaderValue, Method, StatusCode};
@@ -194,8 +195,23 @@ fn set_authentication_headers(req: &mut Request) {
         return;
     }
 
+    let auth = Dictionary::open("bucket_auth");
+    let id = match auth.get("access_key_id") {
+        Some(id) => id,
+        None => return
+    };
+    let key = match auth.get("secret_access_key") {
+        Some(key) => key,
+        None => return
+    };
+
+    let client = awsv4::SignatureClient {
+        access_key_id: id,
+        secret_access_token: key
+    };
+
     let now = Utc::now();
-    let sig = awsv4::aws_v4_auth(req.get_method().as_str(), req.get_path(), now);
+    let sig = client.aws_v4_auth(req.get_method().as_str(), req.get_path(), now);
     req.set_header(header::AUTHORIZATION, sig);
     req.set_header("x-amz-content-sha256", hash("".to_string()));
     req.set_header("x-amz-date", now.format("%Y%m%dT%H%M%SZ").to_string());

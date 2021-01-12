@@ -36,8 +36,6 @@ For private buckets, set these values also:
 
  * `BUCKET_SERVICE` - The service, as defined in your provider's AWSv4 docs, that you are using. `s3` for S3 or `storage` for GCS.
  * `BUCKET_REGION` - The region, as defined in your provider's AWSv4 docs, that you are using. `auto` is fine for GCS.
- * `BUCKET_ACCESS_KEY_ID` - The HMAC access key ID for your service account with read access.
- * `BUCKET_SECRET_ACCESS_KEY` - The HMAC secret key for your service account with read access.
 
 Optionally, you can update these values to configure the default functionality of the starter kit:
 
@@ -45,7 +43,10 @@ Optionally, you can update these values to configure the default functionality o
  * `ASSET_REGEX` - The regex used to determine assets to be preloaded for a given response body. Defaults to files in `/assets/`.
  * `CONTENT_SECURITY_POLICY` - The value of the `Content-Security-Policy` header used to determine origins that resources can be loaded from.
 
-If your bucket doesn't require authentication, make sure to modify the `set_authentication_headers` function in `src/main.rs` to skip the generation of the AWSv4 signature.
+If your bucket requires authentication, you will need to create an [edge dictionary](https://docs.fastly.com/en/guides/about-edge-dictionaries) named `bucket_auth` with the following values:
+
+ * `access_key_id` - The HMAC access key ID for your service account with read access.
+ * `secret_access_key` - The HMAC secret key for your service account with read access.
 
 ## Understanding the code
 
