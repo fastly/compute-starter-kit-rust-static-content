@@ -3,10 +3,10 @@
 mod awsv4;
 mod config;
 
-use fastly::Dictionary;
 use crate::awsv4::hash;
 use chrono::Utc;
 use fastly::http::{header, HeaderValue, Method, StatusCode};
+use fastly::Dictionary;
 use fastly::{Error, Request, Response};
 
 /// The entry point for your application.
@@ -121,7 +121,10 @@ fn main(mut req: Request) -> Result<Response, Error> {
             beresp.set_header(header::ACCESS_CONTROL_ALLOW_ORIGIN, allowed_origins);
 
             // Set Content-Security-Policy header to prevent loading content from other origins.
-            beresp.set_header(header::CONTENT_SECURITY_POLICY, config::CONTENT_SECURITY_POLICY);
+            beresp.set_header(
+                header::CONTENT_SECURITY_POLICY,
+                config::CONTENT_SECURITY_POLICY,
+            );
 
             // Set X-Frame-Options header to prevent other origins embedding the site.
             beresp.set_header(header::X_FRAME_OPTIONS, "SAMEORIGIN");
@@ -130,7 +133,13 @@ fn main(mut req: Request) -> Result<Response, Error> {
             //
             // For example, preload Roboto Mono on all pages. NOTE: Usually, you would use "font" for the "as" parameter of a link to a font source,
             // but Google Fonts serves a CSS file that will load the individual font files as needed so we use "style".
-            beresp.append_header(header::LINK, format!("<{}>; rel=preload; as={};", "https://fonts.googleapis.com/css?family=Roboto+Mono", "style"));
+            beresp.append_header(
+                header::LINK,
+                format!(
+                    "<{}>; rel=preload; as={};",
+                    "https://fonts.googleapis.com/css?family=Roboto+Mono", "style"
+                ),
+            );
             // ... add your own here
         }
     }
@@ -177,16 +186,16 @@ fn set_authentication_headers(req: &mut Request) {
     let auth = Dictionary::open("bucket_auth");
     let id = match auth.get("access_key_id") {
         Some(id) => id,
-        None => return
+        None => return,
     };
     let key = match auth.get("secret_access_key") {
         Some(key) => key,
-        None => return
+        None => return,
     };
 
     let client = awsv4::SignatureClient {
         access_key_id: id,
-        secret_access_token: key
+        secret_access_token: key,
     };
 
     let now = Utc::now();
@@ -213,7 +222,10 @@ fn filter_headers(resp: &mut Response) {
 fn create_cors_response(allowed_origins: HeaderValue) -> Response {
     Response::from_status(StatusCode::NO_CONTENT)
         .with_header(header::ACCESS_CONTROL_ALLOW_ORIGIN, allowed_origins)
-        .with_header(header::ACCESS_CONTROL_ALLOW_METHODS, "GET,HEAD,POST,OPTIONS")
+        .with_header(
+            header::ACCESS_CONTROL_ALLOW_METHODS,
+            "GET,HEAD,POST,OPTIONS",
+        )
         .with_header(header::ACCESS_CONTROL_MAX_AGE, "86400")
         .with_header(header::CACHE_CONTROL, "public, max-age=86400")
 }
