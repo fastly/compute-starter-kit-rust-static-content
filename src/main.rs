@@ -8,7 +8,6 @@ use crate::awsv4::hash;
 use chrono::Utc;
 use fastly::http::{header, HeaderValue, Method, StatusCode};
 use fastly::{Error, Request, Response};
-use regex::Regex;
 
 /// The entry point for your application.
 ///
@@ -127,28 +126,12 @@ fn main(mut req: Request) -> Result<Response, Error> {
             // Set X-Frame-Options header to prevent other origins embedding the site.
             beresp.set_header(header::X_FRAME_OPTIONS, "SAMEORIGIN");
 
-            // For pages using assets, specify that they should be preloaded in the response headers.
-            let expr = Regex::new(config::ASSET_REGEX).unwrap();
-            for caps in expr.captures_iter(&beresp.take_body_str()) {
-                let path = caps.get(1).unwrap().as_str();
-                let file = match path.find('?') {
-                    Some(i) => &path[..i],
-                    None => path,
-                };
-
-                // We are matching based on file extension here, but you could modify this to set the
-                // content type based on the file path if you prefer.
-                let file_type = match std::path::Path::new(file)
-                    .extension()
-                    .and_then(|e| e.to_str())
-                {
-                    Some("css") => "style",
-                    Some("js") => "script",
-                    Some("eot") | Some("woff2") | Some("woff") | Some("tff") => "font",
-                    _ => continue,
-                };
-                beresp.append_header(header::LINK, format!("<{}>; rel=preload; as={};", path, file_type));
-            }
+            // Add headers to preload assets such as fonts needed across your site:
+            //
+            // For example, preload Roboto Mono on all pages. NOTE: Usually, you would use "font" for the "as" parameter of a link to a font source,
+            // but Google Fonts serves a CSS file that will load the individual font files as needed so we use "style".
+            beresp.append_header(header::LINK, format!("<{}>; rel=preload; as={};", "https://fonts.googleapis.com/css?family=Roboto+Mono", "style"));
+            // ... add your own here
         }
     }
 
