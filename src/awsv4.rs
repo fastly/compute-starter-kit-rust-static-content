@@ -5,7 +5,7 @@ use hmac_sha256::{Hash, HMAC};
 use crate::config::{BUCKET_HOST, BUCKET_NAME, BUCKET_REGION, BUCKET_SERVICE};
 
 /// SHA256 HMAC
-fn sign<K: AsRef<[u8]>, I: AsRef<[u8]>>(key: &K, input: I) -> [u8; 32] {
+fn sign<K: AsRef<[u8]>, I: AsRef<[u8]>>(key: K, input: I) -> [u8; 32] {
     HMAC::mac(input.as_ref(), key.as_ref())
 }
 
