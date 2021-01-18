@@ -146,6 +146,8 @@ fn main(mut req: Request) -> Result<Response, Error> {
 
     // Compress assets.
     if original_path.starts_with("/assets/") {
+        // C@E services currently run behind h2o (https://github.com/h2o/h2o)
+        // This header will enable compression on the downstream message in h2o
         beresp.set_header("X-Compress-Hint", "on");
     }
 
