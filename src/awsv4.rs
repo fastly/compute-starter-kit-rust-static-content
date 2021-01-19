@@ -28,8 +28,7 @@ impl SignatureClient {
         let x_amz_today = now.format("%Y%m%d").to_string();
 
         // The spec says we should urlencode everything but the `/`
-        let encoded_path: String = urlencoding::encode(path);
-        let final_encoded_path = encoded_path.replace("%2F", "/");
+        let final_encoded_path = path.replace("%2F", "/");
 
         // These must be sorted alphabetically
         let canonical_headers = format!(
