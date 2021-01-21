@@ -16,7 +16,7 @@ Speed up your websites with a Compute@Edge environment that demonstrates serving
  * Authenticate requests to the origin with AWS Signature Version 4
  * Add caching policy to content
  * Strip query strings
- * Add `Link: rel=preload` header to pre-fetch JavaScript and CSS
+ * Add `Link: rel=preload` header to pre-fetch critical assets like fonts
 
 ## Usage
 
