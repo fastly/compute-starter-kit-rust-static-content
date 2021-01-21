@@ -1,0 +1,16 @@
+[package]
+name = "compute-starter-kit-static-content"
+version = "0.1.0"
+authors = []
+edition = "2018"
+
+[profile.release]
+debug = true
+
+[dependencies]
+fastly = "^0.6.0-beta3"
+chrono = "0.4.19"
+hmac-sha256 = "0.1.6"
+hex = "0.4.2"
+urlencoding = "1.1.1"
+regex = "1.4.2"
