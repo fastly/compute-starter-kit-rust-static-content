@@ -1,13 +1,18 @@
 //! Compute@Edge static content starter kit program.
 
-mod awsv4;
 mod config;
 
-use crate::awsv4::hash;
-use chrono::Utc;
 use fastly::http::{header, HeaderValue, Method, StatusCode};
-use fastly::handle::dictionary::DictionaryHandle;
 use fastly::{Error, Request, Response};
+
+#[cfg(feature="auth")]
+mod awsv4;
+
+#[cfg(feature="auth")]
+use crate::awsv4::{hash, Utc};
+
+#[cfg(feature="auth")]
+use fastly::handle::dictionary::DictionaryHandle;
 
 /// The entry point for your application.
 ///
@@ -179,6 +184,7 @@ fn is_not_found(resp: &Response) -> bool {
 }
 
 /// Sets authentication headers for a given request.
+#[cfg(feature = "auth")]
 fn set_authentication_headers(req: &mut Request) {
     // Ensure that request is a GET to prevent signing write operations
     if req.get_method() != Method::GET {
@@ -209,6 +215,11 @@ fn set_authentication_headers(req: &mut Request) {
     req.set_header(header::AUTHORIZATION, sig);
     req.set_header("x-amz-content-sha256", hash("".to_string()));
     req.set_header("x-amz-date", now.format("%Y%m%dT%H%M%SZ").to_string());
+}
+
+#[cfg(not(feature = "auth"))]
+// Stub for when authentication feature is disabled
+fn set_authentication_headers(_: &mut Request) {
 }
 
 /// Removes all headers but those defined in `ALLOWED_HEADERS` from a response.
