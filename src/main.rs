@@ -5,8 +5,8 @@ mod config;
 
 use crate::awsv4::hash;
 use chrono::Utc;
-use fastly::http::{header, HeaderValue, Method, StatusCode};
 use fastly::handle::dictionary::DictionaryHandle;
+use fastly::http::{header, HeaderValue, Method, StatusCode};
 use fastly::{Error, Request, Response};
 
 /// The entry point for your application.
