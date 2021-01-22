@@ -6,7 +6,7 @@ mod config;
 use crate::awsv4::hash;
 use chrono::Utc;
 use fastly::http::{header, HeaderValue, Method, StatusCode};
-use fastly::Dictionary;
+use fastly::handle::dictionary::DictionaryHandle;
 use fastly::{Error, Request, Response};
 
 /// The entry point for your application.
@@ -185,14 +185,18 @@ fn set_authentication_headers(req: &mut Request) {
         return;
     }
 
-    let auth = Dictionary::open("bucket_auth");
-    let id = match auth.get("access_key_id") {
-        Some(id) => id,
-        None => return,
+    let auth = match DictionaryHandle::open("bucket_auth") {
+        Ok(h) if h.is_valid() => h,
+        _ => return,
     };
-    let key = match auth.get("secret_access_key") {
-        Some(key) => key,
-        None => return,
+
+    let id = match auth.get("access_key_id", 8000) {
+        Ok(Some(id)) => id,
+        _ => return,
+    };
+    let key = match auth.get("secret_access_key", 8000) {
+        Ok(Some(key)) => key,
+        _ => return,
     };
 
     let client = awsv4::SignatureClient {
