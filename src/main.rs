@@ -5,13 +5,13 @@ mod config;
 use fastly::http::{header, HeaderValue, Method, StatusCode};
 use fastly::{Error, Request, Response};
 
-#[cfg(feature="auth")]
+#[cfg(feature = "auth")]
 mod awsv4;
 
-#[cfg(feature="auth")]
+#[cfg(feature = "auth")]
 use crate::awsv4::{hash, Utc};
 
-#[cfg(feature="auth")]
+#[cfg(feature = "auth")]
 use fastly::handle::dictionary::DictionaryHandle;
 
 /// The entry point for your application.
@@ -219,8 +219,7 @@ fn set_authentication_headers(req: &mut Request) {
 
 #[cfg(not(feature = "auth"))]
 // Stub for when authentication feature is disabled
-fn set_authentication_headers(_: &mut Request) {
-}
+fn set_authentication_headers(_: &mut Request) {}
 
 /// Removes all headers but those defined in `ALLOWED_HEADERS` from a response.
 fn filter_headers(resp: &mut Response) {
