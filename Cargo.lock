@@ -56,7 +56,7 @@ name = "compute-starter-kit-static-content"
 version = "0.1.0"
 dependencies = [
  "chrono 0.4.19 (registry+https://github.com/rust-lang/crates.io-index)",
- "fastly 0.6.0-beta3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "fastly 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "hex 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "hmac-sha256 0.1.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "regex 1.4.3 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -65,15 +65,15 @@ dependencies = [
 
 [[package]]
 name = "fastly"
-version = "0.6.0-beta3"
+version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "anyhow 1.0.38 (registry+https://github.com/rust-lang/crates.io-index)",
  "bytes 0.5.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "chrono 0.4.19 (registry+https://github.com/rust-lang/crates.io-index)",
- "fastly-macros 0.4.0-beta3 (registry+https://github.com/rust-lang/crates.io-index)",
- "fastly-shared 0.6.0-beta3 (registry+https://github.com/rust-lang/crates.io-index)",
- "fastly-sys 0.3.7-beta3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "fastly-macros 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "fastly-shared 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "fastly-sys 0.3.7 (registry+https://github.com/rust-lang/crates.io-index)",
  "http 0.2.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "lazy_static 1.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.4.13 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -87,7 +87,7 @@ dependencies = [
 
 [[package]]
 name = "fastly-macros"
-version = "0.4.0-beta3"
+version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "proc-macro2 1.0.24 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -97,7 +97,7 @@ dependencies = [
 
 [[package]]
 name = "fastly-shared"
-version = "0.6.0-beta3"
+version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "bitflags 1.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -107,10 +107,10 @@ dependencies = [
 
 [[package]]
 name = "fastly-sys"
-version = "0.3.7-beta3"
+version = "0.3.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
- "fastly-shared 0.6.0-beta3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "fastly-shared 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -422,10 +422,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 "checksum bytes 1.0.1 (registry+https://github.com/rust-lang/crates.io-index)" = "b700ce4376041dcd0a327fd0097c41095743c4c8af8887265942faf1100bd040"
 "checksum cfg-if 0.1.10 (registry+https://github.com/rust-lang/crates.io-index)" = "4785bdd1c96b2a846b2bd7cc02e86b6b3dbf14e7e53446c4f54c92a361040822"
 "checksum chrono 0.4.19 (registry+https://github.com/rust-lang/crates.io-index)" = "670ad68c9088c2a963aaa298cb369688cf3f9465ce5e2d4ca10e6e0098a1ce73"
-"checksum fastly 0.6.0-beta3 (registry+https://github.com/rust-lang/crates.io-index)" = "905be02734671a2dbd950e744720f808356f406a93856b50d05a51ffdd54967a"
-"checksum fastly-macros 0.4.0-beta3 (registry+https://github.com/rust-lang/crates.io-index)" = "3b63c1a9f825ef08f36ad46c040d5bb9c83c10334eb8dcd543ba511e0c4254a9"
-"checksum fastly-shared 0.6.0-beta3 (registry+https://github.com/rust-lang/crates.io-index)" = "d29653ebef717487dd878a67c71330c336cff55fb2bdbdbbe99bd70ecbc67027"
-"checksum fastly-sys 0.3.7-beta3 (registry+https://github.com/rust-lang/crates.io-index)" = "bfc9143751e75361b0789b7ac9f877d970e71c3b7ba0605a1a231bffb3a8b51d"
+"checksum fastly 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)" = "b32333410ceb0499e2c98af856a47464231e44e78cbfc4a5c66592c1dd8bd07a"
+"checksum fastly-macros 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)" = "9805cc40e0ce43131c09107bf833af402ab102ed2e0bdd1a7f4d9b8789138229"
+"checksum fastly-shared 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)" = "a31e6b7bc3eae372a3538281a7c38af84bdc15298cfa71badb7eb9f5cb487ae8"
+"checksum fastly-sys 0.3.7 (registry+https://github.com/rust-lang/crates.io-index)" = "6b95e92b98ef5ea2cef58bde3f3ca41c4fa478172ac66e2d491923765f2b8690"
 "checksum fnv 1.0.7 (registry+https://github.com/rust-lang/crates.io-index)" = "3f9eec918d3f24069decb9af1554cad7c880e2da24a9afd88aca000531ab82c1"
 "checksum form_urlencoded 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)" = "ece68d15c92e84fa4f19d3780f1294e5ca82a78a6d515f1efaabcc144688be00"
 "checksum hex 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)" = "644f9158b2f133fd50f5fb3242878846d9eb792e445c893805ff0e3824006e35"
