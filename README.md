@@ -48,7 +48,7 @@ If your bucket requires authentication, you will need to create an [edge diction
  * `access_key_id` - The HMAC access key ID for your service account with read access.
  * `secret_access_key` - The HMAC secret key for your service account with read access.
 
- In addition to this, you will need to update the `Cargo.toml` to replace `features = []` with `features = ["auth"]`. This will include the dependencies required to generate signed requests in your package.
+ In addition to this, you will need to update the `Cargo.toml` to replace `default = []` with `default = ["auth"]`. This will include the dependencies required to generate signed requests in your package.
 
 ## Understanding the code
 

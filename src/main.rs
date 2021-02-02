@@ -5,14 +5,14 @@ mod config;
 use fastly::http::{header, HeaderValue, Method, StatusCode};
 use fastly::{Error, Request, Response};
 
-#[cfg(feature = "auth")]
-mod awsv4;
-
-#[cfg(feature = "auth")]
-use crate::awsv4::{hash, Utc};
-
-#[cfg(feature = "auth")]
-use fastly::handle::dictionary::DictionaryHandle;
+cfg_if::cfg_if! {
+    if #[cfg(feature = "auth")] {
+        mod awsv4;
+        use chrono::Utc;
+        use crate::awsv4::hash;
+        use fastly::handle::dictionary::DictionaryHandle;
+    }
+}
 
 /// The entry point for your application.
 ///

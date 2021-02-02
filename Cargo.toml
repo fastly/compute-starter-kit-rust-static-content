@@ -10,14 +10,13 @@ debug = true
 [dependencies]
 fastly = "0.6.0"
 regex = "1.4.2"
+cfg-if = "1.0.0"
 # required for awsv4 sig gen
 chrono = { version = "0.4.19", optional = true }
 hmac-sha256 = { version = "0.1.6", optional = true }
 hex = { version = "0.4.2", optional = true }
 urlencoding = { version = "1.1.1", optional = true }
 
-
 [features]
-default = []
-
+default = ["auth"]
 auth = ["chrono", "hmac-sha256", "hex", "urlencoding"]

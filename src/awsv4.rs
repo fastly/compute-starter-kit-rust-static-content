@@ -1,7 +1,7 @@
 use chrono::DateTime;
-pub use chrono::Utc;
 use hmac_sha256::{Hash, HMAC};
 
+use crate::Utc;
 use crate::config::{BUCKET_HOST, BUCKET_NAME, BUCKET_REGION, BUCKET_SERVICE};
 
 /// SHA256 HMAC
