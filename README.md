@@ -48,9 +48,11 @@ If your bucket requires authentication, you will need to create an [edge diction
  * `access_key_id` - The HMAC access key ID for your service account with read access.
  * `secret_access_key` - The HMAC secret key for your service account with read access.
 
+ In addition to this, you will need to update the `Cargo.toml` to replace `default = []` with `default = ["auth"]`. This will include the dependencies required to generate signed requests in your package.
+
 ## Understanding the code
 
-This starter is feature-packed, and requires some extra dependencies dependencies on top of the [`fastly`](https://docs.rs/fastly) crate to handle signing requests for S3/GCS. If you are using a public bucket for your origin, you can remove these dependencies, the `awsv4.rs` file, and modify the `set_authentication_headers` method to reduce the size of your binary.
+This starter is feature-packed, and requires some extra dependencies on top of the [`fastly`](https://docs.rs/fastly) crate to handle signing requests for S3/GCS. If you are using a public bucket for your origin, these dependencies will not be included.
 
 This starter includes implementations of common patterns explained in our [using Compute@Edge](/learning/compute/using/) and [VCL migration](/learning/compute/migrate) guides. Any of the code you see here can be modified or built upon to suit your project's needs.
 
