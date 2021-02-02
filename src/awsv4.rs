@@ -1,4 +1,4 @@
-use chrono::{Utc, DateTime};
+use chrono::{DateTime, Utc};
 use hmac_sha256::{Hash, HMAC};
 
 use crate::config::{BUCKET_HOST, BUCKET_NAME, BUCKET_REGION, BUCKET_SERVICE};
