@@ -1,5 +1,5 @@
 manifest_version = 1
 name = "Static content"
-description = "Apply performance, security and usability upgrades to static bucket services such as Google Cloud Storage or AWS S3, including redirects, headers, and a 404 page."
+description = "Apply performance, security and usability upgrades to static bucket services such as Google Cloud Storage or AWS S3."
 authors = ["<oss@fastly.com>"]
 language = "rust"
