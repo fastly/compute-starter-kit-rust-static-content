@@ -1,5 +1,7 @@
 # Compute@Edge static content starter kit for Rust
 
+[![Deploy to Fastly](https://deploy.edgecompute.app/button)](https://deploy.edgecompute.app/deploy)
+
 Speed up your websites with a Compute@Edge environment that demonstrates serving content from a static bucket, redirects, security and performance headers, and a 404 page.
 
 **For more details about this and other starter kits for Compute@Edge, see the [Fastly developer hub](https://developer.fastly.com/solutions/starters)**
