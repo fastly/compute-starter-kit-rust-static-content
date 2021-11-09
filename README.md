@@ -20,7 +20,7 @@ Speed up your websites with a Compute@Edge environment that demonstrates serving
 
 ## Usage
 
-When deploying your project, the Fastly CLI (`v1.1.0`) will prompt you to enter a `Backend`. You can enter your bucket host here, or just enter `mock-s3.edgecompute.app` on port `443` if you want to experiment with our mock backend.
+When deploying your project, the Fastly CLI will prompt you to enter a `Backend`. You can enter your bucket host here, or just enter `mock-s3.edgecompute.app` on port `443` if you want to experiment with our mock backend.
 
 ```
 Backend (hostname or IP address, or leave blank to stop adding backends): mock-s3.edgecompute.app
