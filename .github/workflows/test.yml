@@ -47,7 +47,7 @@ jobs:
       run: cargo clippy
       shell: bash
     - name: audit
-      run: cargo audit
+      run: cargo audit --ignore RUSTSEC-2020-0159 --ignore RUSTSEC-2020-0071 # ignore until appropriate solution can be found
       shell: bash
     - name: build
       run: cargo build

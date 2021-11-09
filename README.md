@@ -20,11 +20,12 @@ Speed up your websites with a Compute@Edge environment that demonstrates serving
 
 ## Usage
 
-When initializing your project, the Fastly CLI will prompt you to enter a `Backend`. You can enter your bucket host here, or just enter `mock-s3.edgecompute.app` on port `443` if you want to experiment with our mock backend.
+When deploying your project, the Fastly CLI will prompt you to enter a `Backend`. You can enter your bucket host here, or just enter `mock-s3.edgecompute.app` on port `443` if you want to experiment with our mock backend.
 
 ```
-Backend (originless, hostname or IP address): [originless] mock-s3.edgecompute.app
-Backend port number [80]: 443
+Backend (hostname or IP address, or leave blank to stop adding backends): mock-s3.edgecompute.app
+Backend port number: [80] 443
+Backend name: [backend_1] bucket_origin
 ```
 
 If your content is already in a bucket which is public to the internet, or in a private bucket which supports AWSv4-compatible authentication, you can get started right away by modifying `src/config.rs`. The values you will need to set are:
