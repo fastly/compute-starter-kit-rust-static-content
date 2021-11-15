@@ -1,5 +1,7 @@
 # Compute@Edge static content starter kit for Rust
 
+[![Deploy to Fastly](https://deploy.edgecompute.app/button)](https://deploy.edgecompute.app/deploy)
+
 Speed up your websites with a Compute@Edge environment that demonstrates serving content from a static bucket, redirects, security and performance headers, and a 404 page.
 
 **For more details about this and other starter kits for Compute@Edge, see the [Fastly developer hub](https://developer.fastly.com/solutions/starters)**
@@ -20,12 +22,13 @@ Speed up your websites with a Compute@Edge environment that demonstrates serving
 
 ## Usage
 
-When deploying your project, the Fastly CLI will prompt you to enter a `Backend`. You can enter your bucket host here, or just enter `mock-s3.edgecompute.app` on port `443` if you want to experiment with our mock backend.
+When deploying your project, you will be prompted to configure the `bucket_origin` backend. You can enter your bucket host here, or just hit enter to accept the defaults if you want to experiment with our mock backend:
 
 ```
-Backend (hostname or IP address, or leave blank to stop adding backends): mock-s3.edgecompute.app
-Backend port number: [80] 443
-Backend name: [backend_1] bucket_origin
+Configure a backend called 'bucket_origin'
+
+Hostname or IP address: [mock-s3.edgecompute.app]
+Port: [443]
 ```
 
 If your content is already in a bucket which is public to the internet, or in a private bucket which supports AWSv4-compatible authentication, you can get started right away by modifying `src/config.rs`. The values you will need to set are:
