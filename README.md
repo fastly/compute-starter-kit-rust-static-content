@@ -1,4 +1,4 @@
-# Compute@Edge static content starter kit for Rust
+# Static Content Starter Kit for Rust
 
 [![Deploy to Fastly](https://deploy.edgecompute.app/button)](https://deploy.edgecompute.app/deploy)
 
