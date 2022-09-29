@@ -9,7 +9,7 @@ debug = true
 
 [dependencies]
 fastly = "0.7.1"
-regex = "1.4.2"
+regex = "1.5.5"
 cfg-if = "1.0.0"
 # required for awsv4 sig gen
 chrono = { version = "0.4.19", optional = true }
