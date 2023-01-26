@@ -10,7 +10,7 @@ cfg_if::cfg_if! {
         mod awsv4;
         use chrono::Utc;
         use crate::awsv4::hash;
-        use fastly::handle::dictionary::DictionaryHandle;
+        use fastly::handle::config_store::ConfigStoreHandle;
     }
 }
 
@@ -196,7 +196,7 @@ fn set_authentication_headers(req: &mut Request) {
         return;
     }
 
-    let auth = match DictionaryHandle::open("bucket_auth") {
+    let auth = match ConfigStoreHandle::open("bucket_auth") {
         Ok(h) if h.is_valid() => h,
         _ => return,
     };
