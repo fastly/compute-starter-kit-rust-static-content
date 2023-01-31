@@ -10,7 +10,7 @@ cfg_if::cfg_if! {
         mod awsv4;
         use chrono::Utc;
         use crate::awsv4::hash;
-        use fastly::handle::dictionary::DictionaryHandle;
+        use fastly::ConfigStore;
     }
 }
 
@@ -196,17 +196,17 @@ fn set_authentication_headers(req: &mut Request) {
         return;
     }
 
-    let auth = match DictionaryHandle::open("bucket_auth") {
-        Ok(h) if h.is_valid() => h,
+    let auth = match ConfigStore::try_open("bucket_auth") {
+        Ok(cs) => cs,
         _ => return,
     };
 
-    let id = match auth.get("access_key_id", 8000) {
-        Ok(Some(id)) => id,
+    let id = match auth.get("access_key_id") {
+        Some(id) => id,
         _ => return,
     };
-    let key = match auth.get("secret_access_key", 8000) {
-        Ok(Some(key)) => key,
+    let key = match auth.get("secret_access_key") {
+        Some(key) => key,
         _ => return,
     };
 
