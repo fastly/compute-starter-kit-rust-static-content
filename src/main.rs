@@ -24,8 +24,11 @@ cfg_if::cfg_if! {
 #[fastly::main]
 fn main(mut req: Request) -> Result<Response, Error> {
     // Log service version
-    println!("FASTLY_SERVICE_VERSION: {}", std::env::var("FASTLY_SERVICE_VERSION").unwrap_or_else(|_| String::new()));
-    
+    println!(
+        "FASTLY_SERVICE_VERSION: {}",
+        std::env::var("FASTLY_SERVICE_VERSION").unwrap_or_else(|_| String::new())
+    );
+
     // Used later to generate CORS headers.
     // Usually you would want an allowlist of domains here, but this example allows any origin to make requests.
     let allowed_origins = match req.get_header(header::ORIGIN) {
