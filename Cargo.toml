@@ -8,14 +8,15 @@ edition = "2018"
 debug = true
 
 [dependencies]
-fastly = "0.9.1"
-regex = "1.5.5"
+fastly = "0.9.2"
+regex = "1.7.3"
 cfg-if = "1.0.0"
 # required for awsv4 sig gen
-chrono = { version = "0.4.19", optional = true }
-hmac-sha256 = { version = "0.1.6", optional = true }
-hex = { version = "0.4.2", optional = true }
-urlencoding = { version = "1.1.1", optional = true }
+chrono = { version = "0.4.24", optional = true }
+time = "0.3.19"
+hmac-sha256 = { version = "1.1.6", optional = true }
+hex = { version = "0.4.3", optional = true }
+urlencoding = { version = "2.1.2", optional = true }
 
 [features]
 default = ["auth"]
