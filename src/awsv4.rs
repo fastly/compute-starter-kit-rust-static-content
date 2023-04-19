@@ -1,5 +1,5 @@
-use chrono::{DateTime, Utc};
 use hmac_sha256::{Hash, HMAC};
+use time::{format_description, OffsetDateTime};
 
 use crate::config::{BUCKET_HOST, BUCKET_NAME, BUCKET_REGION, BUCKET_SERVICE};
 
@@ -21,10 +21,13 @@ pub struct SignatureClient {
 impl SignatureClient {
     /// Generate an AWSv4 signature for a given request.
     /// Requests with payloads are not supported.
-    pub fn aws_v4_auth(&self, method: &str, path: &str, now: DateTime<Utc>) -> String {
+    pub fn aws_v4_auth(&self, method: &str, path: &str, now: OffsetDateTime) -> String {
+        let format_date =
+            format_description::parse("[year][month][day]T[hour][minute][second]Z").unwrap();
+        let format_today = format_description::parse("[year][month][day]").unwrap();
         let amz_content_256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"; // empty hash
-        let x_amz_date = now.format("%Y%m%dT%H%M%SZ").to_string();
-        let x_amz_today = now.format("%Y%m%d").to_string();
+        let x_amz_date = now.format(&format_date).unwrap();
+        let x_amz_today = now.format(&format_today).unwrap();
 
         // The spec says we should urlencode everything but the `/`
         // The path is already urlencoded but potentially not in the

@@ -4,11 +4,11 @@ mod config;
 
 use fastly::http::{header, HeaderValue, Method, StatusCode};
 use fastly::{Error, Request, Response};
+use time::{format_description, OffsetDateTime};
 
 cfg_if::cfg_if! {
     if #[cfg(feature = "auth")] {
         mod awsv4;
-        use chrono::Utc;
         use crate::awsv4::hash;
         use fastly::ConfigStore;
     }
@@ -221,11 +221,12 @@ fn set_authentication_headers(req: &mut Request) {
         secret_access_token: key,
     };
 
-    let now = Utc::now();
+    let format = format_description::parse("[year][month][day]T[hour][minute][second]Z").unwrap();
+    let now = OffsetDateTime::now_utc();
     let sig = client.aws_v4_auth(req.get_method().as_str(), req.get_path(), now);
     req.set_header(header::AUTHORIZATION, sig);
     req.set_header("x-amz-content-sha256", hash("".to_string()));
-    req.set_header("x-amz-date", now.format("%Y%m%dT%H%M%SZ").to_string());
+    req.set_header("x-amz-date", now.format(&format).unwrap());
 }
 
 #[cfg(not(feature = "auth"))]

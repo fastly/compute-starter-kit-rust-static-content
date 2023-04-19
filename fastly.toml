@@ -4,17 +4,17 @@
 authors = ["<oss@fastly.com>"]
 description = "Apply performance, security and usability upgrades to static bucket services such as Google Cloud Storage or AWS S3."
 language = "rust"
-manifest_version = 2
+manifest_version = 3
 name = "Static content"
 service_id = ""
 
 [scripts]
-  build = "cargo build --bin fastly-compute-project --release --target wasm32-wasi --color always"
+build = "cargo build --bin fastly-compute-project --release --target wasm32-wasi --color always"
 
 [setup]
 
-  [setup.backends]
+[setup.backends]
 
-    [setup.backends.bucket_origin]
-      address = "mock-s3.edgecompute.app"
-      port = 443
+[setup.backends.bucket_origin]
+address = "mock-s3.edgecompute.app"
+port = 443
