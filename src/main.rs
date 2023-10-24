@@ -1,4 +1,4 @@
-//! Compute@Edge static content starter kit program.
+//! Compute static content starter kit program.
 
 mod config;
 
@@ -72,7 +72,7 @@ fn main(mut req: Request) -> Result<Response, Error> {
     // Assign the path to a variable to be used later.
     let original_path = req.get_path().to_owned();
 
-    // Set the `Host` header to the bucket host rather than our C@E endpoint.
+    // Set the `Host` header to the bucket host rather than our Compute endpoint.
     req.set_header(
         header::HOST,
         format!("{}.{}", config::BUCKET_NAME, config::BUCKET_HOST),
@@ -162,7 +162,7 @@ fn main(mut req: Request) -> Result<Response, Error> {
 
     // Compress assets.
     if original_path.starts_with("/assets/") {
-        // C@E services currently run behind h2o (https://github.com/h2o/h2o)
+        // Compute services currently run behind h2o (https://github.com/h2o/h2o)
         // This header will enable compression on the downstream message in h2o
         beresp.set_header("X-Compress-Hint", "on");
     }
