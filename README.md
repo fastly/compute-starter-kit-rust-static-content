@@ -4,7 +4,7 @@
 
 Speed up your websites with a Fastly Compute environment that demonstrates serving content from a static bucket, redirects, security and performance headers, and a 404 page.
 
-**For more details about this and other starter kits for Compute, see the [Fastly developer hub](https://developer.fastly.com/solutions/starters)**
+**For more details about this and other starter kits for Compute, see the [Fastly Documentation Hub](https://www.fastly.com/documentation/solutions/starters)**
 
 ## Features
 
@@ -59,9 +59,9 @@ If your bucket requires authentication, you will need to create an [edge diction
 
 This starter is feature-packed, and requires some extra dependencies on top of the [`fastly`](https://docs.rs/fastly) crate to handle signing requests for S3/GCS. If you are using a public bucket for your origin, these dependencies will not be included.
 
-This starter includes implementations of common patterns explained in our [using Compute](/learning/compute/rust/) and [VCL migration](/learning/compute/migrate/) guides. Any of the code you see here can be modified or built upon to suit your project's needs.
+This starter includes implementations of common patterns explained in our [using Compute](https://www.fastly.com/documentation/guides/compute/rust/) and [VCL migration](https://www.fastly.com/documentation/guides/compute/migrate/) guides. Any of the code you see here can be modified or built upon to suit your project's needs.
 
-To learn more about how Fastly communicates with your bucket host, read the [Integrating third party services as backends](https://developer.fastly.com/learning/integrations/backends/) guide. This is based on a VCL service, but you can utilise many of the same patterns with the help of the [VCL migration](/learning/compute/migrate/) guide.
+To learn more about how Fastly communicates with your bucket host, read the [Integrating third party services as backends](https://www.fastly.com/documentation/guides/integrations/backends/) guide. This is based on a VCL service, but you can utilise many of the same patterns with the help of the [VCL migration](https://www.fastly.com/documentation/guides/compute/migrate/) guide.
 
 ## Security issues
 
