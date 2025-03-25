@@ -38,10 +38,8 @@ impl SignatureClient {
 
         // These must be sorted alphabetically
         let canonical_headers = format!(
-            "host:{}\nx-amz-content-sha256:{}\nx-amz-date:{}\n",
-            format!("{}.{}", BUCKET_NAME, BUCKET_HOST),
-            amz_content_256,
-            x_amz_date
+            "host:{}.{}\nx-amz-content-sha256:{}\nx-amz-date:{}\n",
+            BUCKET_NAME, BUCKET_HOST, amz_content_256, x_amz_date
         );
 
         let canonical_query = "";
@@ -80,8 +78,8 @@ impl SignatureClient {
         ]
         .iter()
         .fold(
-            sign(&format!("AWS4{}", self.secret_access_token), &x_amz_today),
-            |acc, x| sign(&acc, x),
+            sign(format!("AWS4{}", self.secret_access_token), &x_amz_today),
+            sign,
         );
 
         // Compose authorization header value

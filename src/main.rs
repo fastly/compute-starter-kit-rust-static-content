@@ -105,7 +105,7 @@ fn main(mut req: Request) -> Result<Response, Error> {
         // This means the canonical URL for index pages will always end with a trailing slash.
         if !is_not_found(&beresp) {
             beresp = Response::from_status(StatusCode::MOVED_PERMANENTLY)
-                .with_header(header::LOCATION, &format!("{}/", original_path));
+                .with_header(header::LOCATION, format!("{}/", original_path));
             return Ok(beresp);
         }
     }
@@ -186,7 +186,7 @@ fn get_cache_ttl(path: &str) -> u32 {
     }
 
     // Any other content can be cached for 5 minutes.
-    return 60 * 5;
+    60 * 5
 }
 
 /// Determines if a backend response indicates the requested file doesn't exist.
