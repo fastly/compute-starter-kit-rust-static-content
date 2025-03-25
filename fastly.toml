@@ -1,15 +1,14 @@
 # This file describes a Fastly Compute package. To learn more visit:
-# https://developer.fastly.com/reference/fastly-toml/
+# https://www.fastly.com/documentation/reference/compute/fastly-toml/
 
-authors = ["<oss@fastly.com>"]
+name = "Static content"
 description = "Apply performance, security and usability upgrades to static bucket services such as Google Cloud Storage or AWS S3."
+authors = ["<devrel@fastly.com>"]
 language = "rust"
 manifest_version = 3
-name = "Static content"
-service_id = ""
 
 [scripts]
-build = "cargo build --bin fastly-compute-project --release --target wasm32-wasi --color always"
+  build = "cargo build --profile release"
 
 [setup]
 

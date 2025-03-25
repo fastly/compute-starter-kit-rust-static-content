@@ -21,8 +21,8 @@ pub(crate) const BUCKET_SERVICE: &str = "storage";
 pub(crate) const BUCKET_REGION: &str = "auto";
 
 // If auth is required, configure your access keys in an edge dictionary named "bucket_auth":
-/// access_key_id
-/// secret_access_key
+// - access_key_id
+// - secret_access_key
 
 /// Define a Content Security Policy for content that can load on your site.
 pub(crate) const CONTENT_SECURITY_POLICY: &str =
