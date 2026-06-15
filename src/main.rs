@@ -221,7 +221,9 @@ fn set_authentication_headers(req: &mut Request) {
         secret_access_token: key,
     };
 
-    let format = format_description::parse("[year][month][day]T[hour][minute][second]Z").unwrap();
+    let format =
+        format_description::parse_borrowed::<1>("[year][month][day]T[hour][minute][second]Z")
+            .unwrap();
     let now = OffsetDateTime::now_utc();
     let sig = client.aws_v4_auth(req.get_method().as_str(), req.get_path(), now);
     req.set_header(header::AUTHORIZATION, sig);

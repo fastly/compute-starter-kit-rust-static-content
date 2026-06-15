@@ -23,8 +23,9 @@ impl SignatureClient {
     /// Requests with payloads are not supported.
     pub fn aws_v4_auth(&self, method: &str, path: &str, now: OffsetDateTime) -> String {
         let format_date =
-            format_description::parse("[year][month][day]T[hour][minute][second]Z").unwrap();
-        let format_today = format_description::parse("[year][month][day]").unwrap();
+            format_description::parse_borrowed::<1>("[year][month][day]T[hour][minute][second]Z")
+                .unwrap();
+        let format_today = format_description::parse_borrowed::<1>("[year][month][day]").unwrap();
         let amz_content_256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"; // empty hash
         let x_amz_date = now.format(&format_date).unwrap();
         let x_amz_today = now.format(&format_today).unwrap();
